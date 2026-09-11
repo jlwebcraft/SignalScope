@@ -107,3 +107,68 @@ def test_create_honest_splits_generator_holdout(mock_dataset_directory: Path):
     assert "midjourney" not in train_generators
     assert "midjourney" not in val_generators
     assert "midjourney" in test_generators
+
+
+def test_official_dataset_discovery_and_class_mapping():
+    data_root = Path(r"C:\Programming\SignalScope-data")
+    if not data_root.exists():
+        pytest.skip("Official dataset not present at C:\\Programming\\SignalScope-data")
+
+    train_dir = data_root / "train"
+    assert (train_dir / "REAL").exists(), "REAL directory missing in train"
+    assert (train_dir / "FAKE").exists(), "FAKE directory missing in train"
+
+    # Scan train directory
+    samples = scan_dataset_directory(train_dir)
+    assert len(samples) == 100000, f"Expected 100,000 samples in train, got {len(samples)}"
+
+    real_count = sum(1 for s in samples if s[1] == 0)
+    fake_count = sum(1 for s in samples if s[1] == 1)
+    assert real_count == 50000, f"Expected 50,000 REAL, got {real_count}"
+    assert fake_count == 50000, f"Expected 50,000 FAKE, got {fake_count}"
+
+
+def test_official_train_sample_loading_and_smoke_pass():
+    data_root = Path(r"C:\Programming\SignalScope-data")
+    if not data_root.exists():
+        pytest.skip("Official dataset not present at C:\\Programming\\SignalScope-data")
+
+    train_dir = data_root / "train"
+    samples = scan_dataset_directory(train_dir)
+
+    # Take tiny balanced batch of 4 real and 4 fake samples
+    real_subset = [s for s in samples if s[1] == 0][:4]
+    fake_subset = [s for s in samples if s[1] == 1][:4]
+    batch_samples = real_subset + fake_subset
+
+    transform = get_default_transforms(image_size=224, is_training=False)
+    dataset = SignalScopeDataset(batch_samples, transform=transform)
+    assert len(dataset) == 8
+
+    # Load items and stack
+    tensors, targets = [], []
+    for i in range(len(dataset)):
+        t, y, _ = dataset[i]
+        assert t.shape == (3, 224, 224)
+        tensors.append(t)
+        targets.append(y)
+
+    batch_tensors = torch.stack(tensors)
+    batch_targets = torch.stack(targets)
+
+    # Model smoke pass
+    from model.architectures.convnext import build_convnext_tiny
+    import torch.nn.functional as F
+
+    model = build_convnext_tiny(pretrained=False)
+    model.eval()
+
+    with torch.no_grad():
+        logits = model(batch_tensors)
+        loss = F.binary_cross_entropy_with_logits(logits, batch_targets)
+        probs = torch.sigmoid(logits)
+
+    assert logits.shape == (8, 1)
+    assert probs.shape == (8, 1)
+    assert loss.item() >= 0.0
+

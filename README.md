@@ -206,11 +206,33 @@ python model/predict.py --image path/to/image.jpg
 
 ---
 
-## 7. Development Roadmap & Phased Execution
+## 7. Official Dataset Layout & Anti-Leakage Protocol
+
+SignalScope consumes the official dataset through a decoupled, configurable data root:
+- **Default Location**: `C:\Programming\SignalScope-data` (or configurable via `SIGNALSCOPE_DATA_ROOT` environment variable / `model/configs/default.yaml`).
+
+### Dataset Hierarchy
+```
+<DATA_ROOT>/
+├── train/
+│   ├── REAL/       # 50,000 authentic images (32x32 RGB JPEG)
+│   └── FAKE/       # 50,000 synthetic AI-generated images (32x32 RGB JPEG)
+└── test/           # 20,000 evaluation images (10,000 REAL, 10,000 FAKE)
+```
+
+### Training & Validation Methodology
+1. **Zero-Leakage Policy**: The `test/` partition is designated for evaluation. In strict adherence to SIH 2026 guidelines, **`test/` is completely excluded from model training, validation, threshold tuning, and feature selection**.
+2. **Local Stratified Splits**: A reproducible validation split (e.g. 85,000 train / 15,000 validation) is constructed exclusively from `train/` using deterministic stratified sampling (`seed=42`).
+3. **Disjoint Verification**: The split pipeline asserts zero path overlap (`assert len(train_paths ∩ val_paths) == 0`).
+
+---
+
+## 8. Development Roadmap & Phased Execution
 
 - [x] **Phase 1 — Foundation**: Repository structure, configuration, logging, testing suite, Docker, schemas, baseline CLI.
-- [ ] **Phase 2 — Dataset**: Ingest official training data, inspect class balance/resolution, implement honest train/val/test generator-aware split.
-- [ ] **Phase 3 — Baseline Model**: Pretrained ConvNeXt-Tiny classifier, train on official dataset, establish baseline metrics.
+- [x] **Phase 2A — Reproducible ML Stack**: Python 3.13 isolated Conda environment (`signalscope`), PyTorch 2.6.0+cu124, timm, RTX 3050 GPU verification.
+- [x] **Phase 2B — Dataset Pipeline**: Non-destructive audit of 100,000 training images, verified class balance (1.00:1), fast scandir loader, zero-leakage split logic, model smoke test.
+- [ ] **Phase 2C / 3 — Baseline Model Training**: Pretrained ConvNeXt-Tiny classifier training on local split, baseline metrics (ROC-AUC, Macro-F1, FPR @ threshold).
 - [ ] **Phase 4 — Generalization**: Frequency-domain representation (2D FFT), spatial-frequency fusion, evaluate unseen generator AUC.
 - [ ] **Phase 5 — Robustness**: Controlled degradation evaluation (JPEG, resize, screenshots) and stability score benchmarking.
 - [ ] **Phase 6 — Calibration**: Temperature scaling, probability calibration, threshold optimization for target 5% FPR.

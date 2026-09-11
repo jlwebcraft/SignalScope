@@ -4,6 +4,7 @@ Supports standard folder structures (real/fake or real/synthetic),
 metadata tracking of generator families, and generator-aware honest splits.
 """
 
+import os
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
@@ -95,11 +96,12 @@ class SignalScopeDataset(Dataset):
 def scan_dataset_directory(
     root_dir: Union[str, Path],
 ) -> List[Tuple[Path, int, str]]:
-    """Scans a directory for real and synthetic images.
+    """Scans a directory for real and synthetic images with fast scandir.
 
-    Recognized folder conventions:
+    Recognized folder conventions (case-insensitive):
+    - root/REAL/*, root/FAKE/*
     - root/real/*, root/fake/*
-    - root/real/*, root/synthetic/*
+    - root/authentic/*, root/synthetic/*
     - root/real/*, root/synthetic/<generator>/*
     """
     root_path = Path(root_dir)
@@ -110,27 +112,58 @@ def scan_dataset_directory(
     valid_extensions = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
     samples: List[Tuple[Path, int, str]] = []
 
-    # Check for real images
-    real_dirs = [root_path / "real", root_path / "0_real", root_path / "authentic"]
-    for rdir in real_dirs:
-        if rdir.exists() and rdir.is_dir():
-            for f in rdir.rglob("*"):
-                if f.is_file() and f.suffix.lower() in valid_extensions:
-                    samples.append((f, 0, "real"))
+    real_folder_names = {"real", "0_real", "authentic"}
+    fake_folder_names = {"fake", "synthetic", "1_fake", "ai"}
 
-    # Check for synthetic images
-    synth_dirs = [root_path / "fake", root_path / "synthetic", root_path / "1_fake", root_path / "ai"]
-    for sdir in synth_dirs:
-        if sdir.exists() and sdir.is_dir():
-            for f in sdir.rglob("*"):
-                if f.is_file() and f.suffix.lower() in valid_extensions:
-                    # Generator name from parent subfolder if present
-                    generator = f.parent.name if f.parent != sdir else "unspecified_generator"
-                    samples.append((f, 1, generator))
+    # Inspect immediate child directories
+    for child in root_path.iterdir():
+        if not child.is_dir():
+            continue
+
+        cname_lower = child.name.lower()
+        if cname_lower in real_folder_names:
+            # Scan real images
+            with os.scandir(child) as it:
+                for entry in it:
+                    if entry.is_file():
+                        p = Path(entry.path)
+                        if p.suffix.lower() in valid_extensions:
+                            samples.append((p, 0, "real"))
+        elif cname_lower in fake_folder_names:
+            # Check if there are generator subdirectories or direct images
+            has_subdirs = False
+            for sub in child.iterdir():
+                if sub.is_dir():
+                    has_subdirs = True
+                    gen_name = sub.name
+                    with os.scandir(sub) as it:
+                        for entry in it:
+                            if entry.is_file():
+                                p = Path(entry.path)
+                                if p.suffix.lower() in valid_extensions:
+                                    samples.append((p, 1, gen_name))
+            if not has_subdirs:
+                # Direct images in FAKE / synthetic folder
+                with os.scandir(child) as it:
+                    for entry in it:
+                        if entry.is_file():
+                            p = Path(entry.path)
+                            if p.suffix.lower() in valid_extensions:
+                                samples.append((p, 1, "synthetic"))
+
+    # Fallback to rglob if standard folders were not found at root level
+    if not samples:
+        for f in root_path.rglob("*"):
+            if f.is_file() and f.suffix.lower() in valid_extensions:
+                parent_lower = f.parent.name.lower()
+                if "real" in parent_lower or "authentic" in parent_lower:
+                    samples.append((f, 0, "real"))
+                elif "fake" in parent_lower or "synthetic" in parent_lower or "ai" in parent_lower:
+                    samples.append((f, 1, f.parent.name))
 
     logger.info(
-        f"Scanned {root_path}: found {len(samples)} samples "
-        f"({sum(1 for s in samples if s[1] == 0)} real, {sum(1 for s in samples if s[1] == 1)} synthetic)."
+        f"Scanned {root_path}: found {len(samples):,} samples "
+        f"({sum(1 for s in samples if s[1] == 0):,} real, {sum(1 for s in samples if s[1] == 1):,} synthetic)."
     )
     return samples
 

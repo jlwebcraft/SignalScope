@@ -8,10 +8,11 @@ project:
   seed: 42
 
 dataset:
-  data_root: "data"
-  train_path: "data/train"
-  val_path: "data/val"
-  test_path: "data/test"
+  # Configurable via YAML or SIGNALSCOPE_DATA_ROOT environment variable
+  data_root: "C:/Programming/SignalScope-data"
+  train_path: "train"
+  val_path: "val" # Note: when no separate val folder exists, split is created reproducibly from train
+  test_path: "test" # Evaluated only as held-out test; never touched during training
   image_size: 224
   num_workers: 4
   batch_size: 32

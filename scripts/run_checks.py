@@ -123,12 +123,17 @@ def check_configurations() -> bool:
 def check_official_dataset() -> bool:
     """Checks whether the official SIH dataset is locally present."""
     logger.info("Checking official dataset presence...")
-    data_dir = PROJECT_ROOT / "data"
+    cfg = load_config(str(PROJECT_ROOT / "model/configs/default.yaml"))
+    data_root_str = os.environ.get("SIGNALSCOPE_DATA_ROOT", cfg.get("dataset", {}).get("data_root", "C:/Programming/SignalScope-data"))
+    data_dir = Path(data_root_str)
     train_dir = data_dir / "train"
-    val_dir = data_dir / "val"
 
     if train_dir.exists() and any(train_dir.iterdir()):
-        logger.info(f"  [FOUND] Official dataset located at {data_dir}")
+        logger.info(f"  [FOUND] Official dataset located at: {data_dir}")
+        fake_dir = train_dir / "FAKE"
+        real_dir = train_dir / "REAL"
+        if fake_dir.exists() and real_dir.exists():
+            logger.info("  [FOUND] Standard FAKE and REAL class subdirectories verified in train.")
         return True
     else:
         logger.warning(
