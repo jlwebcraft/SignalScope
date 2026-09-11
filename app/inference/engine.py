@@ -46,6 +46,7 @@ class SignalScopeInferenceEngine:
         self.model = None
         self.device = "cpu"
         self._is_ready = False
+        self.has_trained_weights = False
         self._initialize_engine()
 
     def _initialize_engine(self) -> None:
@@ -53,9 +54,14 @@ class SignalScopeInferenceEngine:
         if self.checkpoint_path and Path(self.checkpoint_path).exists():
             logger.info(f"Loading checkpoint from {self.checkpoint_path}")
             # Placeholder for PyTorch model loading once trained in Phase 3
+            self.has_trained_weights = True
             self._is_ready = True
         else:
-            logger.info("Operating in foundation/scaffolding mode (no trained checkpoint loaded).")
+            logger.warning(
+                "DEVELOPMENT PLACEHOLDER MODE: No trained checkpoint loaded. "
+                "Predictions are heuristic scaffolding, not valid model outputs."
+            )
+            self.has_trained_weights = False
             self._is_ready = True
 
     @property
@@ -222,6 +228,7 @@ class SignalScopeInferenceEngine:
             confidence_level=confidence_level,
             stability_score=stability_info.stability_score,
             evidence_disagreement=evidence_disagreement,
+            is_development_placeholder=not self.has_trained_weights,
             evidence=evidence_items,
             stability=stability_info,
             metadata=meta_info,

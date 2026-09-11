@@ -8,6 +8,7 @@ project:
   seed: 42
 
 dataset:
+  data_root: "data"
   train_path: "data/train"
   val_path: "data/val"
   test_path: "data/test"

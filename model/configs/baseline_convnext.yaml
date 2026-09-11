@@ -20,6 +20,7 @@ training:
   weight_decay: 1.0e-2
   scheduler: "cosine"
   checkpoint_dir: "checkpoints/baseline_convnext"
+  output_dir: "runs/baseline_convnext"
   monitor_metric: "val_auc"
 
 evaluation:

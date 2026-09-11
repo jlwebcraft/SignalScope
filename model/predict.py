@@ -40,6 +40,10 @@ def run_prediction(image_path: str, format_json: bool = False) -> int:
         print(" SIGNALSCOPE AUTHENTICITY ASSESSMENT")
         print(" 'Telling Real From Synthetic in the Age of Generative Media'")
         print("=" * 55)
+        if result.is_development_placeholder:
+            print(" [!] NOTICE: DEVELOPMENT PLACEHOLDER — NOT A VALID MODEL PREDICTION")
+            print("     Trained model weights have not been loaded. Output is heuristic scaffolding.")
+            print("-" * 55)
         print(f" Image                  : {image_path}")
         print(f" Verdict                : {result.verdict.value.upper()}")
         print(f" Synthetic Probability  : {result.probability * 100:.1f}%")

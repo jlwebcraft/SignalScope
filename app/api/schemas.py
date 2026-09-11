@@ -70,6 +70,10 @@ class PredictionResponse(BaseModel):
     confidence_level: ConfidenceLevelEnum = Field(..., description="Confidence level based on probability margin and stability")
     stability_score: float = Field(..., ge=0.0, le=1.0, description="Authenticity stability score under transformations")
     evidence_disagreement: bool = Field(..., description="True if evidence sources (RGB vs Frequency vs Metadata) conflict")
+    is_development_placeholder: bool = Field(
+        default=True,
+        description="True if inference ran without trained checkpoint weights (heuristic/development scaffolding)"
+    )
     evidence: List[EvidenceItem] = Field(default_factory=list, description="Structured multimodal evidence")
     stability: AuthenticityStabilityInfo = Field(..., description="Detailed stability breakdown across transformations")
     metadata: MetadataInfo = Field(..., description="Extracted metadata and provenance")

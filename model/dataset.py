@@ -133,3 +133,83 @@ def scan_dataset_directory(
         f"({sum(1 for s in samples if s[1] == 0)} real, {sum(1 for s in samples if s[1] == 1)} synthetic)."
     )
     return samples
+
+
+def create_honest_splits(
+    samples: List[Tuple[Union[str, Path], int, str]],
+    val_ratio: float = 0.15,
+    test_ratio: float = 0.15,
+    seed: int = 42,
+    holdout_generators: Optional[List[str]] = None,
+) -> Tuple[List[Tuple[Path, int, str]], List[Tuple[Path, int, str]], List[Tuple[Path, int, str]]]:
+    """Partitions samples into train, val, and test splits without data leakage.
+
+    Supports:
+    - Generator-aware holdout: Specific generator families are reserved for unseen-generator evaluation.
+    - Stratified splitting by binary class label for remaining data.
+    - Deterministic random seeding.
+    - Strict non-overlapping path verification.
+
+    Returns:
+        Tuple of (train_samples, val_samples, test_samples).
+    """
+    if not samples:
+        return [], [], []
+
+    rng = np.random.RandomState(seed)
+    holdout_set = set(g.lower() for g in (holdout_generators or []))
+
+    test_samples: List[Tuple[Path, int, str]] = []
+    pool_samples: List[Tuple[Path, int, str]] = []
+
+    for path, label, gen in samples:
+        p = Path(path)
+        if gen.lower() in holdout_set:
+            test_samples.append((p, label, gen))
+        else:
+            pool_samples.append((p, label, gen))
+
+    # Separate pool by class for stratification
+    real_pool = [s for s in pool_samples if s[1] == 0]
+    synth_pool = [s for s in pool_samples if s[1] == 1]
+
+    def split_class_pool(pool: List[Tuple[Path, int, str]]):
+        n = len(pool)
+        indices = rng.permutation(n)
+        n_val = int(round(n * val_ratio))
+        n_test = int(round(n * test_ratio)) if not holdout_generators else 0
+
+        val_idx = set(indices[:n_val])
+        test_idx = set(indices[n_val : n_val + n_test])
+
+        val = [pool[i] for i in val_idx]
+        test = [pool[i] for i in test_idx]
+        train = [pool[i] for i in range(n) if i not in val_idx and i not in test_idx]
+        return train, val, test
+
+    real_train, real_val, real_test = split_class_pool(real_pool)
+    synth_train, synth_val, synth_test = split_class_pool(synth_pool)
+
+    train_samples = real_train + synth_train
+    val_samples = real_val + synth_val
+    test_samples = test_samples + real_test + synth_test
+
+    # Shuffle final splits
+    rng.shuffle(train_samples)
+    rng.shuffle(val_samples)
+    rng.shuffle(test_samples)
+
+    # Verification of zero leakage / disjointness
+    train_paths = set(str(s[0]) for s in train_samples)
+    val_paths = set(str(s[0]) for s in val_samples)
+    test_paths = set(str(s[0]) for s in test_samples)
+
+    assert len(train_paths.intersection(val_paths)) == 0, "Data leakage detected: Train and Val overlap!"
+    assert len(train_paths.intersection(test_paths)) == 0, "Data leakage detected: Train and Test overlap!"
+    assert len(val_paths.intersection(test_paths)) == 0, "Data leakage detected: Val and Test overlap!"
+
+    logger.info(
+        f"Honest Split: Train={len(train_samples)}, Val={len(val_samples)}, Test={len(test_samples)} "
+        f"(Holdout generators: {list(holdout_set) if holdout_set else 'None'})"
+    )
+    return train_samples, val_samples, test_samples
