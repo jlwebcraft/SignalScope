@@ -97,6 +97,74 @@ class SignalScopeDataset(Dataset):
         return tensor, target, metadata
 
 
+def get_native_transforms(
+    image_size: int = 32,
+    is_training: bool = False,
+) -> transforms.Compose:
+    """Returns transforms preserving native resolution for frequency branch."""
+    # Standard normalization preserving pixel statistics
+    normalize = transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225],
+    )
+
+    if is_training:
+        return transforms.Compose([
+            transforms.Resize((image_size, image_size)),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.ToTensor(),
+            normalize,
+        ])
+    else:
+        return transforms.Compose([
+            transforms.Resize((image_size, image_size)),
+            transforms.ToTensor(),
+            normalize,
+        ])
+
+
+class SignalScopeDualDataset(Dataset):
+    """Dual-branch PyTorch Dataset for SignalScope.
+
+    Provides synchronized inputs:
+    - spatial_tensor: Resized to 224x224 for ConvNeXt backbone
+    - native_tensor: Retained at native 32x32 for Frequency Branch
+    """
+
+    def __init__(
+        self,
+        samples: List[Tuple[Union[str, Path], int, str]],
+        spatial_transform: Optional[Callable] = None,
+        native_transform: Optional[Callable] = None,
+    ) -> None:
+        self.samples = samples
+        self.spatial_transform = spatial_transform or get_default_transforms(image_size=224, is_training=False)
+        self.native_transform = native_transform or get_native_transforms(image_size=32, is_training=False)
+
+    def __len__(self) -> int:
+        return len(self.samples)
+
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Dict[str, str]]:
+        img_path, label, generator = self.samples[idx]
+
+        try:
+            with Image.open(img_path) as img:
+                pil_img = img.convert("RGB")
+        except Exception:
+            try:
+                pil_img = load_image_safely(img_path)
+            except Exception as exc:
+                logger.warning(f"Error loading {img_path}: {exc}. Using blank placeholder.")
+                pil_img = Image.new("RGB", (32, 32), color=(128, 128, 128))
+
+        spatial_tensor = self.spatial_transform(pil_img)
+        native_tensor = self.native_transform(pil_img)
+        target = torch.tensor([float(label)], dtype=torch.float32)
+        metadata = {"path": str(img_path), "generator": generator}
+
+        return spatial_tensor, native_tensor, target, metadata
+
+
 def scan_dataset_directory(
     root_dir: Union[str, Path],
 ) -> List[Tuple[Path, int, str]]:
