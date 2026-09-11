@@ -63,26 +63,79 @@ Predictions across transformations are evaluated for variance and maximum drift.
 
 ---
 
-## 3. Dataset & Split Methodology (To be populated in Phase 2)
+## 3. Dataset & Split Methodology
 
-| Split | Real Samples | Synthetic Samples | Total | Notes |
+The official SignalScope dataset contains 100,000 training images and 20,000 held-out test images.
+All training and validation experiments strictly consume the `train/` directory.
+
+> [!IMPORTANT]
+> **Anti-Leakage Protocol**: The official `test/` partition (20,000 images) is designated as the held-out evaluation set. It is strictly excluded from all training, validation, feature selection, and threshold tuning.
+
+| Split | Real Samples | Synthetic Samples | Total Samples | Methodology & Notes |
 |---|---|---|---|---|
-| Train | TBD | TBD | TBD | Official provided training data |
-| Validation | TBD | TBD | TBD | Stratified validation |
-| Held-out Test | TBD | TBD | TBD | Unseen generator evaluation |
+| **Local Train** | 42,500 | 42,500 | 85,000 | 85% stratified split from `train/` (`seed=42`) |
+| **Local Validation** | 7,500 | 7,500 | 15,000 | 15% stratified split from `train/` (`seed=42`), zero overlap |
+| **Official Held-Out Test** | 10,000 | 10,000 | 20,000 | Organizer evaluation partition — STRICTLY HELD OUT |
+
+*Limitation Note*: The supplied training data provides binary REAL/FAKE labels without per-generator metadata tags. The validation split is class-stratified and deterministic; generator-aware splitting is unavailable on training data because no generator metadata is provided.
 
 ---
 
-## 4. Experimental Results (To be populated in Phase 3 & 4)
+## 4. Experimental Results
 
-*Note: In accordance with hackathon rules, metrics are recorded only from empirical experimental evaluations. No placeholder metrics are reported as final.*
+*Note: In accordance with hackathon integrity guidelines, all reported metrics derive directly from empirical evaluation on our verified local validation split. No synthetic or placeholder numbers are used.*
 
-| Model Architecture | Unseen Gen AUC | Overall ROC-AUC | Macro-F1 | Accuracy | FPR @ Operating Thr | Notes |
+### Phase 2C Baseline: ConvNeXt-Tiny Spatial Transfer Learning
+
+- **Model Backbone**: `convnext_tiny.in12k_ft_in1k` (timm identifier)
+- **Input Resolution**: 224x224 (bicubic upsampled from 32x32 JPEG)
+- **Optimizer**: AdamW ($\text{lr} = 10^{-4}$, $\text{weight\_decay} = 10^{-2}$)
+- **Scheduler**: Cosine Annealing (5 epochs, $\text{min\_lr} = 10^{-6}$)
+- **Mixed Precision**: FP16 / PyTorch AMP enabled
+- **Hardware**: NVIDIA GeForce RTX 3050 6GB Laptop GPU (Peak VRAM: 3.94 GB)
+- **Training Time**: 5,103.8 seconds (85.06 minutes)
+
+#### Local Validation Results (15,000 samples from train partition)
+
+| Metric | Threshold = 0.50 (Default) | Threshold = 0.4214 (Optimal Youden's J) |
+|---|---|---|
+| **ROC-AUC** | **0.9992** | **0.9992** |
+| **Macro-F1** | **0.9908** (99.08%) | **0.9909** (99.09%) |
+| **Accuracy** | **99.08%** | **99.09%** |
+| **Precision** | **98.98%** | **98.95%** |
+| **Recall (Sensitivity)** | **99.19%** | **99.24%** |
+| **False Positive Rate (FPR)** | **1.03%** | **1.05%** |
+| **Specificity (TNR)** | **98.97%** | **98.95%** |
+
+#### Confusion Matrix (Local Validation Set, Threshold = 0.50)
+| | Predicted Real | Predicted AI-Generated | Total Ground Truth |
+|---|---|---|---|
+| **Actual Real (Authentic)** | **7,423** (TN) | **77** (FP) | 7,500 |
+| **Actual Synthetic (AI)** | **61** (FN) | **7,439** (TP) | 7,500 |
+
+#### Training Progression by Epoch
+| Epoch | Train Loss | Val Loss | Val ROC-AUC | Val Macro-F1 | Val Acc | Val FPR | Epoch Time |
+|---|---|---|---|---|---|---|---|
+| 1 | 0.1223 | 0.0737 | 0.9977 | 0.9745 | 97.45% | 4.05% | 1,071s |
+| 2 | 0.0565 | 0.0542 | 0.9986 | 0.9805 | 98.05% | 0.81% | 1,013s |
+| 3 | 0.0313 | 0.0407 | 0.9990 | 0.9851 | 98.51% | 1.99% | 1,007s |
+| 4 | 0.0125 | 0.0448 | 0.9991 | 0.9854 | 98.54% | 2.07% | 1,005s |
+| 5 | **0.0029** | **0.0383** | **0.9992** | **0.9908** | **99.08%** | **1.03%** | 1,004s |
+
+#### Official Held-Out SIH Test Results
+- **Status**: **Pending Organizer Evaluation**
+- In strict adherence to competition rules, the held-out `test/` partition has not been evaluated during development or model selection.
+
+---
+
+### Comparative Evaluation Matrix
+
+| Model Architecture | Local Val ROC-AUC | Local Val Macro-F1 | Local Val Accuracy | Local Val FPR | Held-out SIH Test | Notes |
 |---|---|---|---|---|---|---|
-| ConvNeXt-Tiny Spatial Baseline | TBD | TBD | TBD | TBD | TBD | Phase 3 |
-| FFT Frequency Branch Only | TBD | TBD | TBD | TBD | TBD | Phase 4 |
-| Dual-Branch Fusion Network | TBD | TBD | TBD | TBD | TBD | Phase 4 |
-| Calibrated Fusion + Stability | TBD | TBD | TBD | TBD | TBD | Phase 5 & 6 |
+| **ConvNeXt-Tiny Spatial Baseline** | **0.9992** | **0.9908** | **99.08%** | **1.03%** | *Pending* | Pure transfer-learning baseline (Phase 2C) |
+| FFT Frequency Branch Only | TBD | TBD | TBD | TBD | *Pending* | Phase 3 |
+| Dual-Branch Fusion Network | TBD | TBD | TBD | TBD | *Pending* | Phase 3 |
+| Calibrated Fusion + Stability | TBD | TBD | TBD | TBD | *Pending* | Phase 4 |
 
 ---
 

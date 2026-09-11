@@ -12,7 +12,7 @@ Computes mandatory SIH 2026 challenge metrics:
 import argparse
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -112,6 +112,144 @@ def find_threshold_for_target_fpr(
         best_idx = idx[-1]
         return float(thresholds[best_idx]), float(fprs[best_idx])
     return 0.50, float(fprs[0])
+
+
+def find_optimal_threshold_youden(
+    y_true: np.ndarray,
+    y_scores: np.ndarray,
+) -> Tuple[float, float]:
+    """Finds optimal operating threshold maximizing Youden's J statistic (TPR - FPR).
+
+    Returns:
+        Tuple of (optimal_threshold, max_j_statistic).
+    """
+    fprs, tprs, thresholds = roc_curve(y_true, y_scores)
+    j_scores = tprs - fprs
+    best_idx = int(np.argmax(j_scores))
+    best_threshold = float(thresholds[best_idx])
+    # Clip between 0.01 and 0.99 for numerical stability
+    best_threshold = float(np.clip(best_threshold, 0.01, 0.99))
+    return best_threshold, float(j_scores[best_idx])
+
+
+def plot_roc_curve(
+    y_true: np.ndarray,
+    y_scores: np.ndarray,
+    output_path: Union[str, Path],
+    title: str = "SignalScope Baseline ROC Curve",
+) -> None:
+    """Generates and saves high-resolution ROC curve plot."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fprs, tprs, _ = roc_curve(y_true, y_scores)
+    auc_val = roc_auc_score(y_true, y_scores)
+
+    plt.figure(figsize=(7, 6))
+    plt.plot(fprs, tprs, color="#2563eb", lw=2, label=f"ConvNeXt Baseline (AUC = {auc_val:.4f})")
+    plt.plot([0, 1], [0, 1], color="#9ca3af", lw=1.5, linestyle="--", label="Random Chance")
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel("False Positive Rate (FPR)", fontsize=12)
+    plt.ylabel("True Positive Rate (TPR)", fontsize=12)
+    plt.title(title, fontsize=13, fontweight="bold")
+    plt.legend(loc="lower right", fontsize=11)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    out_p = Path(output_path)
+    out_p.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(out_p, dpi=200)
+    plt.close()
+    logger.info(f"Saved ROC curve plot to {out_p}")
+
+
+def plot_confusion_matrix_figure(
+    cm_matrix: List[List[int]],
+    output_path: Union[str, Path],
+    class_names: Tuple[str, str] = ("Real", "Synthetic"),
+    title: str = "Baseline Confusion Matrix",
+) -> None:
+    """Generates and saves annotated confusion matrix heatmap."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    cm = np.array(cm_matrix)
+    plt.figure(figsize=(6, 5))
+    plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
+    plt.title(title, fontsize=13, fontweight="bold")
+    plt.colorbar()
+
+    tick_marks = np.arange(len(class_names))
+    plt.xticks(tick_marks, class_names, fontsize=11)
+    plt.yticks(tick_marks, class_names, fontsize=11)
+
+    thresh = cm.max() / 2.0
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            plt.text(
+                j,
+                i,
+                f"{cm[i, j]:,}",
+                horizontalalignment="center",
+                color="white" if cm[i, j] > thresh else "black",
+                fontsize=13,
+                fontweight="bold",
+            )
+
+    plt.ylabel("Ground Truth", fontsize=12)
+    plt.xlabel("Predicted Label", fontsize=12)
+    plt.tight_layout()
+
+    out_p = Path(output_path)
+    out_p.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(out_p, dpi=200)
+    plt.close()
+    logger.info(f"Saved confusion matrix plot to {out_p}")
+
+
+def plot_training_history(
+    history: Dict[str, List[float]],
+    output_path: Union[str, Path],
+    title: str = "Baseline Training & Validation Curves",
+) -> None:
+    """Plots training/validation loss and validation AUC curves over epochs."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    epochs = range(1, len(history["train_loss"]) + 1)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
+
+    # Loss curve
+    ax1.plot(epochs, history["train_loss"], "o-", color="#dc2626", lw=2, label="Train Loss")
+    ax1.plot(epochs, history["val_loss"], "s-", color="#2563eb", lw=2, label="Val Loss")
+    ax1.set_xlabel("Epoch", fontsize=11)
+    ax1.set_ylabel("Loss (BCE With Logits)", fontsize=11)
+    ax1.set_title("Training vs Validation Loss", fontsize=12, fontweight="bold")
+    ax1.legend(fontsize=10)
+    ax1.grid(True, alpha=0.3)
+
+    # Validation AUC & F1 curves
+    ax2.plot(epochs, history["val_auc"], "o-", color="#16a34a", lw=2, label="Val ROC-AUC")
+    ax2.plot(epochs, history["val_f1"], "s-", color="#9333ea", lw=2, label="Val Macro-F1")
+    ax2.set_xlabel("Epoch", fontsize=11)
+    ax2.set_ylabel("Metric Score", fontsize=11)
+    ax2.set_title("Validation ROC-AUC & Macro-F1", fontsize=12, fontweight="bold")
+    ax2.legend(fontsize=10)
+    ax2.grid(True, alpha=0.3)
+
+    plt.suptitle(title, fontsize=14, fontweight="bold")
+    plt.tight_layout()
+
+    out_p = Path(output_path)
+    out_p.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(out_p, dpi=200)
+    plt.close()
+    logger.info(f"Saved training history curves to {out_p}")
 
 
 def print_metrics_report(metrics: Dict[str, Any], title: str = "Evaluation Report") -> None:

@@ -201,7 +201,11 @@ Interactive Swagger documentation is available at `http://localhost:8000/docs`.
 
 ### Run CLI Prediction
 ```bash
-python model/predict.py --image path/to/image.jpg
+# Using trained baseline checkpoint:
+python model/predict.py --image path/to/image.jpg --checkpoint checkpoints/baseline_convnext/best_model.pt
+
+# Output as structured JSON:
+python model/predict.py --image path/to/image.jpg --checkpoint checkpoints/baseline_convnext/best_model.pt --json
 ```
 
 ---
@@ -222,18 +226,33 @@ SignalScope consumes the official dataset through a decoupled, configurable data
 
 ### Training & Validation Methodology
 1. **Zero-Leakage Policy**: The `test/` partition is designated for evaluation. In strict adherence to SIH 2026 guidelines, **`test/` is completely excluded from model training, validation, threshold tuning, and feature selection**.
-2. **Local Stratified Splits**: A reproducible validation split (e.g. 85,000 train / 15,000 validation) is constructed exclusively from `train/` using deterministic stratified sampling (`seed=42`).
-3. **Disjoint Verification**: The split pipeline asserts zero path overlap (`assert len(train_paths ∩ val_paths) == 0`).
+2. **Local Stratified Splits**: A reproducible validation split (85,000 train / 15,000 validation) is constructed exclusively from `train/` using deterministic stratified sampling (`seed=42`).
+3. **Generator Metadata Status**: The supplied training data provides binary REAL/FAKE labels but no per-generator metadata. Validation split is class-stratified and deterministic; generator-aware splitting is unavailable on training data because the supplied set contains no generator metadata.
+4. **Disjoint Verification**: The split pipeline asserts zero path overlap (`assert len(train_paths ∩ val_paths) == 0`).
 
 ---
 
-## 8. Development Roadmap & Phased Execution
+## 8. Empirical Baseline Model Results (Phase 2C)
+
+Trained strictly on the local training partition (85,000 train / 15,000 val) without touching `test/`:
+- **Backbone**: `convnext_tiny.in12k_ft_in1k` (pure spatial transfer learning)
+- **Local Validation ROC-AUC**: **0.9992**
+- **Local Validation Macro-F1**: **0.9908** (99.08%)
+- **Local Validation Accuracy**: **99.08%**
+- **Local Validation False Positive Rate**: **1.03%** (at default threshold 0.50)
+- **Local Validation Specificity**: **98.97%**
+- **Confusion Matrix (Val 15,000)**: TN=7,423 | FP=77 | FN=61 | TP=7,439
+- **Official Held-Out Test**: Pending official organizer evaluation
+
+---
+
+## 9. Development Roadmap & Phased Execution
 
 - [x] **Phase 1 — Foundation**: Repository structure, configuration, logging, testing suite, Docker, schemas, baseline CLI.
 - [x] **Phase 2A — Reproducible ML Stack**: Python 3.13 isolated Conda environment (`signalscope`), PyTorch 2.6.0+cu124, timm, RTX 3050 GPU verification.
 - [x] **Phase 2B — Dataset Pipeline**: Non-destructive audit of 100,000 training images, verified class balance (1.00:1), fast scandir loader, zero-leakage split logic, model smoke test.
-- [ ] **Phase 2C / 3 — Baseline Model Training**: Pretrained ConvNeXt-Tiny classifier training on local split, baseline metrics (ROC-AUC, Macro-F1, FPR @ threshold).
-- [ ] **Phase 4 — Generalization**: Frequency-domain representation (2D FFT), spatial-frequency fusion, evaluate unseen generator AUC.
+- [x] **Phase 2C — Baseline Model Training**: Pretrained ConvNeXt-Tiny classifier training on local split, baseline metrics (ROC-AUC: 0.9992, Macro-F1: 0.9908, FPR: 1.03% @ threshold 0.50).
+- [ ] **Phase 3 — Generalization / Frequency Features**: Frequency-domain representation (2D FFT), spatial-frequency fusion head.
 - [ ] **Phase 5 — Robustness**: Controlled degradation evaluation (JPEG, resize, screenshots) and stability score benchmarking.
 - [ ] **Phase 6 — Calibration**: Temperature scaling, probability calibration, threshold optimization for target 5% FPR.
 - [ ] **Phase 7 — Explainability**: Grad-CAM saliency heatmaps, spectral anomaly plots, grounded natural language explanations.

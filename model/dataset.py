@@ -81,10 +81,14 @@ class SignalScopeDataset(Dataset):
         img_path, label, generator = self.samples[idx]
 
         try:
-            pil_img = load_image_safely(img_path)
-        except Exception as exc:
-            logger.warning(f"Error loading {img_path}: {exc}. Using blank placeholder.")
-            pil_img = Image.new("RGB", (224, 224), color=(128, 128, 128))
+            with Image.open(img_path) as img:
+                pil_img = img.convert("RGB")
+        except Exception:
+            try:
+                pil_img = load_image_safely(img_path)
+            except Exception as exc:
+                logger.warning(f"Error loading {img_path}: {exc}. Using blank placeholder.")
+                pil_img = Image.new("RGB", (224, 224), color=(128, 128, 128))
 
         tensor = self.transform(pil_img)
         target = torch.tensor([float(label)], dtype=torch.float32)

@@ -51,11 +51,31 @@ class SignalScopeInferenceEngine:
 
     def _initialize_engine(self) -> None:
         """Initializes model components or falls back to baseline/test mode."""
+        self.model_name = "unloaded"
         if self.checkpoint_path and Path(self.checkpoint_path).exists():
-            logger.info(f"Loading checkpoint from {self.checkpoint_path}")
-            # Placeholder for PyTorch model loading once trained in Phase 3
-            self.has_trained_weights = True
-            self._is_ready = True
+            try:
+                import torch
+                from model.architectures.convnext import build_convnext_tiny
+                from model.dataset import get_default_transforms
+
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                self.device = str(device)
+                ckpt = torch.load(self.checkpoint_path, map_location=device, weights_only=False)
+                state_dict = ckpt["state_dict"] if isinstance(ckpt, dict) and "state_dict" in ckpt else ckpt
+
+                model = build_convnext_tiny(pretrained=False).to(device)
+                model.load_state_dict(state_dict)
+                model.eval()
+                self.model = model
+                self.transform = get_default_transforms(image_size=224, is_training=False)
+                self.has_trained_weights = True
+                self.model_name = ckpt.get("model_name", "convnext_tiny.in12k_ft_in1k") if isinstance(ckpt, dict) else "convnext_tiny"
+                self._is_ready = True
+                logger.info(f"Loaded trained checkpoint from {self.checkpoint_path} ({self.model_name}) onto {self.device}")
+            except Exception as exc:
+                logger.error(f"Failed to load checkpoint {self.checkpoint_path}: {exc}")
+                self.has_trained_weights = False
+                self._is_ready = False
         else:
             logger.warning(
                 "DEVELOPMENT PLACEHOLDER MODE: No trained checkpoint loaded. "
@@ -72,12 +92,16 @@ class SignalScopeInferenceEngine:
     def predict_raw_probability(self, image: Image.Image) -> float:
         """Computes synthetic probability for a given PIL Image.
 
-        In Phase 1 / test mode: computes a deterministic visual signal from image stats.
-        In Phase 3+: routes through PyTorch ConvNeXt and frequency branches.
+        When model is loaded: routes through PyTorch ConvNeXt-Tiny forward pass.
+        In test/scaffolding mode without weights: computes deterministic visual signal.
         """
-        if self.model is not None:
-            # When model is loaded, run torch forward pass
-            pass
+        if self.model is not None and self.has_trained_weights:
+            import torch
+            tensor = self.transform(image).unsqueeze(0).to(self.device)
+            with torch.no_grad():
+                logit = self.model(tensor)
+                prob = float(torch.sigmoid(logit).item())
+            return float(np.clip(prob, 0.0, 1.0))
 
         # Deterministic lightweight baseline heuristic for scaffolding and testing
         # Analyzes color distribution and edge variance

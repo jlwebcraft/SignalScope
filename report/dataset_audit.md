@@ -59,5 +59,7 @@
 ---
 
 ## 4. Generator & Provenance Metadata
-- **Generator Tracking**: None detected from filenames or subfolders; labels are binary REAL / FAKE.
+- **Generator Tracking**: The supplied training data provides binary REAL/FAKE labels but no per-generator metadata.
 - **Folder Label Representation**: `0 = REAL`, `1 = FAKE`
+- **Generalization Note**: While the training partition contains binary labels, the competition's held-out test set specifically evaluates generalization against unseen generators.
+
