@@ -1,0 +1,27 @@
+# SignalScope Baseline Experiment Configuration: ConvNeXt-Tiny Spatial Baseline
+# Phase 3 Baseline Reference
+
+experiment_name: "baseline_convnext_tiny"
+base_config: "model/configs/default.yaml"
+
+model:
+  name: "convnext_tiny"
+  pretrained: true
+  in_channels: 3
+  num_classes: 1
+  dropout_rate: 0.2
+  use_frequency_branch: false
+
+training:
+  epochs: 10
+  batch_size: 32
+  learning_rate: 1.0e-4
+  optimizer: "adamw"
+  weight_decay: 1.0e-2
+  scheduler: "cosine"
+  checkpoint_dir: "checkpoints/baseline_convnext"
+  monitor_metric: "val_auc"
+
+evaluation:
+  operating_threshold: 0.50
+  target_fpr: 0.05

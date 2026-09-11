@@ -1,0 +1,97 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Logs & Experiment Tracking
+logs/
+*.log
+runs/
+wandb/
+mlruns/
+lightning_logs/
+
+# Large Datasets & Archives (Strict Hackathon Rule: Do not commit datasets)
+data/
+datasets/
+raw_data/
+processed_data/
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.rar
+
+# Model Checkpoints & Weights (Strict Hackathon Rule: Store externally / releases)
+checkpoints/
+weights/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+*.bin
+*.h5
+
+# Frontend & Node artifacts
+node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+.npm/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.secret
+credentials.json

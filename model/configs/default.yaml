@@ -1,0 +1,81 @@
+# SignalScope Default Master Configuration
+# "Telling Real From Synthetic in the Age of Generative Media"
+# SIH 2026 Internal Hackathon
+
+project:
+  name: SignalScope
+  version: "0.1.0"
+  seed: 42
+
+dataset:
+  train_path: "data/train"
+  val_path: "data/val"
+  test_path: "data/test"
+  image_size: 224
+  num_workers: 4
+  batch_size: 32
+  pin_memory: true
+  val_split_ratio: 0.15
+  test_split_ratio: 0.15
+  generator_aware_split: true # Hold out specific generators for unseen test evaluation
+
+model:
+  name: "convnext_tiny"
+  pretrained: true
+  in_channels: 3
+  num_classes: 1 # Binary classification (0 = real, 1 = synthetic)
+  dropout_rate: 0.2
+  use_frequency_branch: false # Enabled in Phase 4
+  frequency_in_channels: 1
+
+training:
+  epochs: 15
+  optimizer: "adamw"
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-2
+  scheduler: "cosine"
+  min_lr: 1.0e-6
+  warmup_epochs: 2
+  label_smoothing: 0.05
+  mixed_precision: true # FP16 / AMP
+  early_stopping_patience: 5
+  checkpoint_dir: "checkpoints"
+  save_best_only: true
+  monitor_metric: "val_auc" # Primary optimization metric
+
+augmentations:
+  horizontal_flip: 0.5
+  random_crop_scale: [0.8, 1.0]
+  color_jitter:
+    brightness: 0.1
+    contrast: 0.1
+    saturation: 0.1
+  jpeg_compression_prob: 0.3
+  jpeg_quality_range: [60, 95]
+  gaussian_blur_prob: 0.1
+
+evaluation:
+  operating_threshold: 0.50
+  target_fpr: 0.05 # Target 5% FPR operating point
+  uncertainty_band: 0.10
+  metrics:
+    - "roc_auc"
+    - "macro_f1"
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "fpr"
+    - "confusion_matrix"
+
+stability:
+  enabled: true
+  transforms:
+    - name: "jpeg_recompression"
+      quality: 70
+    - name: "resize_down_up"
+      scale_factor: 0.6
+    - name: "screenshot_simulation"
+      blur_radius: 0.5
+    - name: "light_crop_resize"
+      crop_fraction: 0.92
+  stability_threshold: 0.75
