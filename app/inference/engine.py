@@ -39,6 +39,7 @@ class SignalScopeInferenceEngine:
         self,
         config_path: Optional[str] = None,
         checkpoint_path: Optional[str] = None,
+        device: Optional[str] = None,
         operating_threshold: float = 0.50,
         uncertainty_band: float = 0.10,
     ) -> None:
@@ -47,19 +48,32 @@ class SignalScopeInferenceEngine:
         Args:
             config_path: Path to model configuration YAML.
             checkpoint_path: Path to trained PyTorch weights.
+            device: Computing device ('cpu', 'cuda', or None for auto).
             operating_threshold: Calibrated decision boundary for synthetic classification.
             uncertainty_band: Half-width around threshold where verdict is deemed 'uncertain'.
         """
+        import os
+        from app.inference.artifacts import ModelArtifactManager
+
         self.config_path = config_path
-        if checkpoint_path is None:
-            default_ckpt = Path("checkpoints/baseline_convnext/best_model.pt")
-            if default_ckpt.exists():
-                checkpoint_path = str(default_ckpt)
-        self.checkpoint_path = checkpoint_path
+        self.artifact_manager = ModelArtifactManager(checkpoint_path=checkpoint_path)
+        self.checkpoint_path = str(self.artifact_manager.checkpoint_path)
+
+        # Device determination: explicit param > DEVICE env var > auto CUDA detection
+        if device is not None:
+            self.device = device
+        elif os.environ.get("DEVICE"):
+            self.device = os.environ["DEVICE"]
+        else:
+            try:
+                import torch
+                self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            except ImportError:
+                self.device = "cpu"
+
         self.operating_threshold = operating_threshold
         self.uncertainty_band = uncertainty_band
         self.model = None
-        self.device = "cpu"
         self._is_ready = False
         self.has_trained_weights = False
         self.scaler = None
@@ -71,18 +85,18 @@ class SignalScopeInferenceEngine:
         self.scaler = TemperatureScaler()
         self.model_name = "unloaded"
 
-        if self.checkpoint_path and Path(self.checkpoint_path).exists():
+        resolved_ckpt = self.artifact_manager.resolve_checkpoint()
+        if resolved_ckpt and resolved_ckpt.exists():
             try:
                 import torch
                 from model.architectures.convnext import build_convnext_tiny
                 from model.dataset import get_default_transforms
 
-                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-                self.device = str(device)
-                ckpt = torch.load(self.checkpoint_path, map_location=device, weights_only=False)
+                target_device = torch.device(self.device)
+                ckpt = torch.load(str(resolved_ckpt), map_location=target_device, weights_only=False)
                 state_dict = ckpt["state_dict"] if isinstance(ckpt, dict) and "state_dict" in ckpt else ckpt
 
-                model = build_convnext_tiny(pretrained=False).to(device)
+                model = build_convnext_tiny(pretrained=False).to(target_device)
                 model.load_state_dict(state_dict)
                 model.eval()
                 self.model = model
@@ -91,19 +105,18 @@ class SignalScopeInferenceEngine:
                 self.model_name = ckpt.get("model_name", "convnext_tiny.in12k_ft_in1k") if isinstance(ckpt, dict) else "convnext_tiny"
 
                 # Check for companion temperature scaler
-                scaler_path = Path(self.checkpoint_path).parent / "temperature_scaler.json"
-                if scaler_path.exists():
+                resolved_scaler = self.artifact_manager.resolve_scaler()
+                if resolved_scaler and resolved_scaler.exists():
                     try:
-                        self.scaler.load(scaler_path)
-                        logger.info(f"Loaded temperature scaler (T={self.scaler.temperature:.4f}) from {scaler_path}")
+                        self.scaler.load(resolved_scaler)
+                        logger.info(f"Loaded temperature scaler (T={self.scaler.temperature:.4f}) from {resolved_scaler}")
                     except Exception as s_err:
-                        logger.warning(f"Could not load temperature scaler from {scaler_path}: {s_err}")
-
+                        logger.warning(f"Could not load temperature scaler from {resolved_scaler}: {s_err}")
 
                 self._is_ready = True
-                logger.info(f"Loaded trained checkpoint from {self.checkpoint_path} ({self.model_name}) onto {self.device}")
+                logger.info(f"Loaded trained checkpoint from {resolved_ckpt} ({self.model_name}) onto {self.device}")
             except Exception as exc:
-                logger.error(f"Failed to load checkpoint {self.checkpoint_path}: {exc}")
+                logger.error(f"Failed to load checkpoint {resolved_ckpt}: {exc}")
                 self.has_trained_weights = False
                 self._is_ready = False
         else:
