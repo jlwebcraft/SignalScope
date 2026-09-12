@@ -1,0 +1,71 @@
+{
+  "analysis_name": "complementarity_and_error_analysis",
+  "validation_samples_count": 15000,
+  "score_correlations": {
+    "rgb_vs_frequency_pearson_r": 0.7793,
+    "rgb_vs_frequency_spearman_rho": 0.7694,
+    "rgb_vs_fusion_pearson_r": 0.9873,
+    "frequency_vs_fusion_pearson_r": 0.7755
+  },
+  "contingency_table": {
+    "both_correct": 12841,
+    "rgb_correct_frequency_wrong": 2021,
+    "rgb_wrong_frequency_correct": 60,
+    "both_wrong": 78,
+    "total_disagreements": 2081,
+    "disagreement_rate_percent": 13.87
+  },
+  "fusion_impact": {
+    "fusion_fixes_rgb_errors": 45,
+    "fusion_breaks_rgb_correct": 94,
+    "net_correctness_change": -49
+  },
+  "representative_error_cases": [
+    {
+      "category": "RGB_wrong_Frequency_correct",
+      "image_path": "C:\\Programming\\SignalScope-data\\train\\FAKE\\1915 (3).jpg",
+      "ground_truth": "Synthetic (1)",
+      "rgb_score": 0.0989,
+      "freq_score": 0.5015,
+      "fusion_score": 0.0108,
+      "observation": "RGB spatial branch incorrectly predicted Real (score 0.10), while frequency spectral branch correctly identified the sample (score 0.50)."
+    },
+    {
+      "category": "RGB_wrong_Frequency_correct",
+      "image_path": "C:\\Programming\\SignalScope-data\\train\\REAL\\2107 (10).jpg",
+      "ground_truth": "Real (0)",
+      "rgb_score": 0.7349,
+      "freq_score": 0.2362,
+      "fusion_score": 0.028,
+      "observation": "RGB spatial branch incorrectly predicted Synthetic (score 0.73), while frequency spectral branch correctly identified the sample (score 0.24)."
+    },
+    {
+      "category": "RGB_wrong_Frequency_correct",
+      "image_path": "C:\\Programming\\SignalScope-data\\train\\REAL\\4544 (3).jpg",
+      "ground_truth": "Real (0)",
+      "rgb_score": 0.9487,
+      "freq_score": 0.1238,
+      "fusion_score": 0.6152,
+      "observation": "RGB spatial branch incorrectly predicted Synthetic (score 0.95), while frequency spectral branch correctly identified the sample (score 0.12)."
+    },
+    {
+      "category": "both_wrong",
+      "image_path": "C:\\Programming\\SignalScope-data\\train\\FAKE\\1921 (9).jpg",
+      "ground_truth": "Synthetic (1)",
+      "rgb_score": 0.2646,
+      "freq_score": 0.0416,
+      "fusion_score": 0.0091,
+      "observation": "Both spatial and spectral modalities failed on this sample. True label is Synthetic, but both models assigned scores on the opposite side of 0.50 (RGB: 0.26, Freq: 0.04)."
+    },
+    {
+      "category": "both_wrong",
+      "image_path": "C:\\Programming\\SignalScope-data\\train\\REAL\\0181 (3).jpg",
+      "ground_truth": "Real (0)",
+      "rgb_score": 0.8677,
+      "freq_score": 0.8457,
+      "fusion_score": 0.9917,
+      "observation": "Both spatial and spectral modalities failed on this sample. True label is Real, but both models assigned scores on the opposite side of 0.50 (RGB: 0.87, Freq: 0.85)."
+    }
+  ],
+  "methodological_notes": "In the sampled training data, synthetic examples showed different spectral distributions from real examples, including localized high-frequency structure. The cause and generality of these patterns remain to be established experimentally. Local validation only; unseen-generator generalization remains pending organizer test evaluation."
+}

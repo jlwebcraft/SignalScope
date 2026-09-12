@@ -1,0 +1,96 @@
+{
+  "experiment_name": "frequency_only",
+  "date": "2026-09-11T14:00:20.937024+00:00",
+  "git_commit": "9435825c457a5e75085c0dc74855e47261497182",
+  "model_architecture": "FrequencyCNNBranch (FFT 32x32)",
+  "dataset_split": {
+    "train_samples": 85000,
+    "val_samples": 15000,
+    "test_partition": "STRICTLY_HELD_OUT"
+  },
+  "random_seed": 42,
+  "input_size": "32x32",
+  "transform": "frequency_only",
+  "optimizer": "AdamW",
+  "learning_rate": 0.0001,
+  "batch_size": 128,
+  "epoch_count": 5,
+  "best_epoch": 5,
+  "loss": 0.33033,
+  "metrics_default_thr": {
+    "operating_threshold": 0.5,
+    "roc_auc": 0.9372,
+    "macro_f1": 0.8596,
+    "accuracy": 0.8601,
+    "precision": 0.8242,
+    "recall": 0.9155,
+    "fpr": 0.1953,
+    "specificity": 0.8047,
+    "confusion_matrix": {
+      "tn": 6035,
+      "fp": 1465,
+      "fn": 634,
+      "tp": 6866,
+      "matrix": [
+        [
+          6035,
+          1465
+        ],
+        [
+          634,
+          6866
+        ]
+      ]
+    },
+    "sample_count": {
+      "total": 15000,
+      "real": 7500,
+      "synthetic": 7500
+    }
+  },
+  "metrics_optimal_thr": {
+    "operating_threshold": 0.63525390625,
+    "roc_auc": 0.9372,
+    "macro_f1": 0.8655,
+    "accuracy": 0.8655,
+    "precision": 0.8583,
+    "recall": 0.8756,
+    "fpr": 0.1445,
+    "specificity": 0.8555,
+    "confusion_matrix": {
+      "tn": 6416,
+      "fp": 1084,
+      "fn": 933,
+      "tp": 6567,
+      "matrix": [
+        [
+          6416,
+          1084
+        ],
+        [
+          933,
+          6567
+        ]
+      ]
+    },
+    "sample_count": {
+      "total": 15000,
+      "real": 7500,
+      "synthetic": 7500
+    }
+  },
+  "threshold_analysis": {
+    "default_threshold": 0.5,
+    "optimal_threshold_youden": 0.6353,
+    "max_youden_j": 0.7311
+  },
+  "training_time_seconds": 722.54,
+  "peak_vram_gb": 0.09,
+  "checkpoint_path": "C:\\Programming\\SignalScope\\checkpoints\\frequency_only\\best_model.pt",
+  "figures": {
+    "training_curves": "C:\\Programming\\SignalScope\\report\\figures\\frequency_only_training_curves.png",
+    "roc_curve": "C:\\Programming\\SignalScope\\report\\figures\\frequency_only_roc_curve.png",
+    "confusion_matrix": "C:\\Programming\\SignalScope\\report\\figures\\frequency_only_confusion_matrix.png"
+  },
+  "notes": "Experimental evaluation on local validation split. Raw model probabilities are uncalibrated."
+}

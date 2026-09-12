@@ -45,7 +45,7 @@ def test_evaluate_authenticity_stability_invariant_model(sample_pil_image: Image
     assert stability.stability_score >= 0.95
     assert stability.is_stable is True
     assert stability.degradation_impact == "minimal"
-    assert len(stability.transform_results) == 5
+    assert len(stability.transform_results) == 7
 
 
 def test_evaluate_authenticity_stability_volatile_model(sample_pil_image: Image.Image):

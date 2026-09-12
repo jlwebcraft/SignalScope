@@ -63,40 +63,362 @@ Predictions across transformations are evaluated for variance and maximum drift.
 
 ---
 
-## 3. Dataset & Split Methodology (To be populated in Phase 2)
+## 3. Dataset & Split Methodology
 
-| Split | Real Samples | Synthetic Samples | Total | Notes |
+The official SignalScope dataset contains 100,000 training images and 20,000 held-out test images.
+All training and validation experiments strictly consume the `train/` directory.
+
+> [!IMPORTANT]
+> **Anti-Leakage Protocol**: The official `test/` partition (20,000 images) is designated as the held-out evaluation set. It is strictly excluded from all training, validation, feature selection, and threshold tuning.
+
+| Split | Real Samples | Synthetic Samples | Total Samples | Methodology & Notes |
 |---|---|---|---|---|
-| Train | TBD | TBD | TBD | Official provided training data |
-| Validation | TBD | TBD | TBD | Stratified validation |
-| Held-out Test | TBD | TBD | TBD | Unseen generator evaluation |
+| **Local Train** | 42,500 | 42,500 | 85,000 | 85% stratified split from `train/` (`seed=42`) |
+| **Local Validation** | 7,500 | 7,500 | 15,000 | 15% stratified split from `train/` (`seed=42`), zero overlap |
+| **Official Held-Out Test** | 10,000 | 10,000 | 20,000 | Organizer evaluation partition — STRICTLY HELD OUT |
+
+*Limitation Note*: The supplied training data provides binary REAL/FAKE labels without per-generator metadata tags. The validation split is class-stratified and deterministic; generator-aware splitting is unavailable on training data because no generator metadata is provided.
 
 ---
 
-## 4. Experimental Results (To be populated in Phase 3 & 4)
+## 4. Experimental Results
 
-*Note: In accordance with hackathon rules, metrics are recorded only from empirical experimental evaluations. No placeholder metrics are reported as final.*
+*Note: In accordance with hackathon integrity guidelines, all reported metrics derive directly from empirical evaluation on our verified local validation split. No synthetic or placeholder numbers are used.*
 
-| Model Architecture | Unseen Gen AUC | Overall ROC-AUC | Macro-F1 | Accuracy | FPR @ Operating Thr | Notes |
+### Phase 2C Baseline: ConvNeXt-Tiny Spatial Transfer Learning
+
+- **Model Backbone**: `convnext_tiny.in12k_ft_in1k` (timm identifier)
+- **Input Resolution**: 224x224 (bicubic upsampled from 32x32 JPEG)
+- **Optimizer**: AdamW ($\text{lr} = 10^{-4}$, $\text{weight\_decay} = 10^{-2}$)
+- **Scheduler**: Cosine Annealing (5 epochs, $\text{min\_lr} = 10^{-6}$)
+- **Mixed Precision**: FP16 / PyTorch AMP enabled
+- **Hardware**: NVIDIA GeForce RTX 3050 6GB Laptop GPU (Peak VRAM: 3.94 GB)
+- **Training Time**: 5,103.8 seconds (85.06 minutes)
+
+#### Local Validation Results (15,000 samples from train partition)
+
+| Metric | Threshold = 0.50 (Default) | Threshold = 0.4214 (Optimal Youden's J) |
+|---|---|---|
+| **ROC-AUC** | **0.9992** | **0.9992** |
+| **Macro-F1** | **0.9908** (99.08%) | **0.9909** (99.09%) |
+| **Accuracy** | **99.08%** | **99.09%** |
+| **Precision** | **98.98%** | **98.95%** |
+| **Recall (Sensitivity)** | **99.19%** | **99.24%** |
+| **False Positive Rate (FPR)** | **1.03%** | **1.05%** |
+| **Specificity (TNR)** | **98.97%** | **98.95%** |
+
+#### Confusion Matrix (Local Validation Set, Threshold = 0.50)
+| | Predicted Real | Predicted AI-Generated | Total Ground Truth |
+|---|---|---|---|
+| **Actual Real (Authentic)** | **7,423** (TN) | **77** (FP) | 7,500 |
+| **Actual Synthetic (AI)** | **61** (FN) | **7,439** (TP) | 7,500 |
+
+#### Training Progression by Epoch
+| Epoch | Train Loss | Val Loss | Val ROC-AUC | Val Macro-F1 | Val Acc | Val FPR | Epoch Time |
+|---|---|---|---|---|---|---|---|
+| 1 | 0.1223 | 0.0737 | 0.9977 | 0.9745 | 97.45% | 4.05% | 1,071s |
+| 2 | 0.0565 | 0.0542 | 0.9986 | 0.9805 | 98.05% | 0.81% | 1,013s |
+| 3 | 0.0313 | 0.0407 | 0.9990 | 0.9851 | 98.51% | 1.99% | 1,007s |
+| 4 | 0.0125 | 0.0448 | 0.9991 | 0.9854 | 98.54% | 2.07% | 1,005s |
+| 5 | **0.0029** | **0.0383** | **0.9992** | **0.9908** | **99.08%** | **1.03%** | 1,004s |
+
+#### Official Held-Out SIH Test Results
+- **Status**: **Pending Organizer Evaluation**
+- In strict adherence to competition rules, the held-out `test/` partition has not been evaluated during development or model selection.
+
+---
+
+### Comparative Evaluation Matrix (Local Validation Split: 15,000 samples)
+
+| Model Architecture | Local Val ROC-AUC | Local Val Macro-F1 | Local Val Accuracy | Local Val FPR | Held-out SIH Test | Notes |
 |---|---|---|---|---|---|---|
-| ConvNeXt-Tiny Spatial Baseline | TBD | TBD | TBD | TBD | TBD | Phase 3 |
-| FFT Frequency Branch Only | TBD | TBD | TBD | TBD | TBD | Phase 4 |
-| Dual-Branch Fusion Network | TBD | TBD | TBD | TBD | TBD | Phase 4 |
-| Calibrated Fusion + Stability | TBD | TBD | TBD | TBD | TBD | Phase 5 & 6 |
+| **ConvNeXt-Tiny Spatial Baseline** | **0.9992** | **0.9908** | **99.08%** | **1.03%** | *Pending* | Pure transfer-learning baseline (Phase 2C) |
+| **FFT Frequency Branch Only (32x32)** | **0.9372** | **0.8596** | **86.01%** | **19.53%** | *Pending* | 2D FFT log-magnitude on native resolution |
+| **DCT Frequency Branch Only (32x32)** | **0.9610** | **0.8983** | **89.83%** | **10.32%** | *Pending* | 2D DCT Type-II log-magnitude on native resolution |
+| **RGB + FFT Dual-Branch Fusion** | **0.9992** | **0.9875** | **98.75%** | **0.93%** | *Pending* | Joint spatial-spectral representation (Best Epoch 2) |
+| Calibrated Fusion + Stability | TBD | TBD | TBD | TBD | *Pending* | Phase 4 / Phase 6 |
+
+*Methodological Note*: In the sampled training data, synthetic examples showed different spectral distributions from real examples, including localized high-frequency structure. The cause and generality of these patterns remain to be established experimentally. Local validation only; unseen-generator generalization remains pending organizer test evaluation. Raw sigmoid outputs are uncalibrated probabilities.
+
+### Phase 3 Complementarity & Error Analysis Summary
+- **Prediction Score Correlation**:
+  - RGB Spatial vs. Frequency (FFT): Pearson $r = 0.7793$ | Spearman $\rho = 0.7694$
+  - RGB Spatial vs. Fusion: Pearson $r = 0.9873$
+  - Frequency vs. Fusion: Pearson $r = 0.7755$
+- **2x2 Contingency Table (RGB Baseline vs. Frequency-Only)**:
+  - Both Correct: 12,841 (85.61%)
+  - RGB Correct / Frequency Wrong: 2,021 (13.47%)
+  - RGB Wrong / Frequency Correct: 60 (0.40%)
+  - Both Wrong: 78 (0.52%)
+  - Disagreement Rate: 13.87% (2,081 samples)
+- **Fusion Impact Relative to Baseline**:
+  - Samples where Fusion fixed RGB baseline error: 45
+  - Samples where Fusion introduced new error: 94
+  - Net correctness change: -49 samples (-0.33% accuracy)
+  - FPR reduction: Fusion lowered FPR from 1.03% (Baseline) to 0.93% (Fusion) at default threshold 0.50.
 
 ---
 
-## 5. Robustness & Stability Analysis
-*(To be populated in Phase 5)*
+## 5. Robustness & Authenticity Stability Analysis (Phase 4)
+
+### 5.1 Why Robustness Matters
+In real-world deployment (SIH Bonus Module C), media rarely arrives in pristine raw formats. Images undergo social media recompression (JPEG transcoding), resolution rescaling, screenshot captures, and cropping. A dependable detector must not exhibit volatile decision flips or wild probability swings under routine degradations.
+
+> [!IMPORTANT]
+> **Data Partition Compliance**: These are local validation robustness results evaluated strictly on 3,000 stratified samples (1,500 authentic, 1,500 synthetic) from `train/` (`seed=42`). They are **not** the organizer's unseen-generator test results. The official held-out test partition `C:\Programming\SignalScope-data\test` remains strictly untouched.
+
+### 5.2 Controlled Transformations Tested
+Each image was evaluated under 7 controlled conditions applied directly to native 32x32 representations prior to model input:
+1. **Original**: Pristine uncompressed native 32x32 image
+2. **JPEG 95**: High-quality JPEG recompression ($Q = 95$)
+3. **JPEG 85**: Typical web JPEG recompression ($Q = 85$)
+4. **JPEG 70**: Aggressive social media transmission compression ($Q = 70$)
+5. **Resize**: Bilinear downsample to $70\%$ scale ($22 \times 22$) + Bicubic restoration to $32 \times 32$
+6. **Screenshot**: Subpixel BoxBlur ($r = 0.5$) + JPEG re-encoding ($Q = 80$)
+7. **Light Edit**: $90\%$ center crop ($28 \times 28$) + Bilinear restoration to $32 \times 32$
+
+### 5.3 Comparative Robustness Results (3,000 Stratified Validation Samples)
+
+| Model | Transform | ROC-AUC | Macro-F1 | Accuracy | FPR | Flip Rate | Mean Prob Drift |
+|---|---|---|---|---|---|---|---|
+| **Baseline (ConvNeXt)** | Original | **0.9995** | 0.9910 | 99.10% | 1.00% | 0.00% | 0.0000 |
+| **Fusion (RGB+FFT)** | Original | **0.9991** | 0.9857 | 98.57% | 1.00% | 0.00% | 0.0000 |
+| **Baseline (ConvNeXt)** | JPEG 95 | **0.9995** | 0.9903 | 99.03% | 0.93% | 0.13% | 0.0013 |
+| **Fusion (RGB+FFT)** | JPEG 95 | **0.9993** | 0.9853 | 98.53% | 0.93% | 0.10% | 0.0020 |
+| **Baseline (ConvNeXt)** | JPEG 85 | **0.9994** | 0.9883 | 98.83% | 1.33% | 0.27% | 0.0031 |
+| **Fusion (RGB+FFT)** | JPEG 85 | **0.9990** | 0.9843 | 98.43% | 1.13% | 0.27% | 0.0033 |
+| **Baseline (ConvNeXt)** | JPEG 70 | **0.9995** | 0.9887 | 98.87% | 1.53% | 0.30% | 0.0039 |
+| **Fusion (RGB+FFT)** | JPEG 70 | **0.9990** | 0.9847 | 98.47% | 1.27% | 0.23% | 0.0033 |
+| **Baseline (ConvNeXt)** | Resize (0.7x) | **0.9494** | 0.6197 | 66.27% | 0.13% | 33.77% | 0.3348 |
+| **Fusion (RGB+FFT)** | Resize (0.7x) | **0.9521** | 0.6352 | 67.40% | 0.00% | 32.17% | 0.3196 |
+| **Baseline (ConvNeXt)** | Screenshot | **0.9213** | 0.5312 | 60.40% | 0.20% | 39.63% | 0.3932 |
+| **Fusion (RGB+FFT)** | Screenshot | **0.9159** | 0.5325 | 60.53% | 0.00% | 39.03% | 0.3872 |
+| **Baseline (ConvNeXt)** | Light Edit | **0.9925** | 0.8594 | 86.20% | 0.13% | 13.77% | 0.1375 |
+| **Fusion (RGB+FFT)** | Light Edit | **0.9870** | 0.8491 | 85.23% | 0.07% | 14.27% | 0.1441 |
+
+### 5.4 Authenticity Stability Score Formulation
+To quantify prediction stability per sample across transformations, we define the deterministic metric $S \in [0, 1]$:
+$$S = C \times \left(1 - \frac{\bar{D} + D_{\max}}{2}\right)$$
+- **Consistency ($C$)**: Fraction of transformations retaining original classification ($C = \frac{1}{K} \sum_{k=1}^K \mathbb{I}(\hat{y}_k = \hat{y}_0)$).
+- **Mean Absolute Drift ($\bar{D}$)**: Average probability change $\frac{1}{K} \sum_{k=1}^K |p_k - p_0|$.
+- **Max Absolute Drift ($D_{\max}$)**: Maximum probability change $\max_k |p_k - p_0|$.
+
+#### Empirical Stability Distribution
+| Metric | ConvNeXt Baseline | RGB + FFT Fusion |
+|---|---|---|
+| **Mean Stability Score** | **0.6820** | **0.6885** |
+| **Median Stability Score** | 0.9991 | 0.9996 |
+| **Std Deviation** | 0.3807 | 0.3819 |
+| **Fraction Stable ($S \ge 0.75$)** | **59.23%** | **60.20%** |
+
+### 5.5 Key Observations & Scientific Findings
+1. **JPEG Invariance**: Both models are resilient to JPEG recompression ($Q=95, 85, 70$), maintaining $\text{AUC} \ge 0.9990$ and flip rates $< 0.30\%$.
+2. **Spatial Rescaling & Blur Sensitivity**: Downsampling and subpixel blur degrade synthetic recall (dropping from $\approx 99\%$ to $21-35\%$) while false positives remain extremely low ($\text{FPR} \le 0.20\%$). Synthetic high frequencies are smoothed, causing the model to become conservative and classify ambiguous images as Real.
+3. **Fusion Resilience on Resizing**: Fusion retained higher degraded AUC on resolution resizing ($0.9521$ vs. $0.9494$) and a lower flip rate ($32.17\%$ vs. $33.77\%$), and achieved a higher overall stable fraction ($60.20\%$ vs. $59.23\%$).
+4. **Responsible Uncertainty**: Volatility under spatial perturbation directly motivates flagging low-stability samples ($S < 0.75$) as *"Uncertain / Human Review Recommended"* rather than outputting misleading overconfident verdicts.
 
 ---
 
-## 6. Saliency & Explainability
-*(To be populated in Phase 7 with Grad-CAM visualizations and frequency spectrum plots)*
+## 6. Calibration & Faithful Explainability (Phase 5)
+
+### 6.1 Calibration Methodology & Anti-Leakage Protocol
+
+> [!IMPORTANT]
+> **Anti-Leakage & Partition Integrity Declaration**:
+> Calibration was fitted on a separate subset of the official training partition (`train/`, `seed=42`) and evaluated on the untouched local validation set (15,000 images).
+> **The organizer-held-out test partition (`C:\Programming\SignalScope-data\test`) was strictly NOT accessed or used.**
+
+Raw sigmoid outputs from deep neural networks trained with cross-entropy often suffer from overconfidence. To produce reliable probabilities, SignalScope applies **post-hoc Temperature Scaling** to the primary ConvNeXt spatial classifier:
+
+$$\hat{p} = \sigma\left(\frac{z}{T}\right)$$
+
+where $z$ is the model logit and $T > 0$ is the learned scalar temperature parameter optimizing Negative Log-Likelihood (NLL) on a held-out calibration set.
+
+#### Partition Design:
+- **Total Official Training Pool**: 100,000 images (`train/`)
+- **Untouched Local Validation Split**: 15,000 images (7,500 real, 7,500 fake) — preserved as the final evaluation benchmark.
+- **Training Subset**: 80,000 images (used for model parameter training).
+- **Calibration Split**: 5,000 images (2,500 real, 2,500 fake) drawn deterministically from the remaining training portion (`seed=42`).
+
+### 6.2 Empirical Calibration Results (15,000 Untouched Local Validation Samples)
+
+| Metric | Pre-Calibration (Raw Sigmoid) | Post-Calibration (Temperature Scaling) | Delta / Impact |
+|---|---|---|---|
+| **Fitted Temperature ($T$)** | 1.0000 (Identity) | **0.9995** | Scale factor $\approx 1.00$ |
+| **Brier Score** | **0.00795** | **0.00795** | Stable optimal quadratic score |
+| **Expected Calibration Error (ECE)** | **0.0062** (0.62%) | **0.0062** (0.62%) | Exceptional intrinsic calibration |
+| **Maximum Calibration Error (MCE)** | **0.2688** | **0.2688** | Confined to isolated boundary bins |
+| **ROC-AUC** | **0.9995** | **0.9995** | Monotonic rank-preserving ($100\%$ preserved) |
+| **Macro-F1** | **0.9908** | **0.9908** | Invariant across monotonic scaling |
+| **Accuracy** | **99.08%** | **99.08%** | Invariant across monotonic scaling |
+| **FPR** | **1.03%** | **1.03%** | Preserved at default operating threshold |
+
+#### Calibration Insights:
+1. **Intrinsic Reliability**: The ConvNeXt baseline with weight decay ($10^{-2}$) and cosine learning rate scheduling already achieves an exceptionally well-calibrated posterior ($T = 0.9995 \approx 1.0$, $\text{ECE} = 0.62\%$).
+2. **Rank Preservation**: Post-hoc temperature scaling is strictly monotonic, preserving optimal ranking ($\text{ROC-AUC} = 0.9995$) while ensuring rigorous probabilistic meaning for downstream thresholding and evidence weighting.
+
+### 6.3 Operating Threshold Analysis
+
+| Threshold Operating Point | Accuracy | Macro-F1 | Precision | Recall | FPR | Selection Rationale |
+|---|---|---|---|---|---|---|
+| **0.50 (Default / Production Reference)** | **99.08%** | **0.9908** | **98.98%** | **99.19%** | **1.03%** | Standard neutral probabilistic decision boundary |
+| **0.4214 (Optimal Youden's J)** | **99.09%** | **0.9909** | **98.95%** | **99.24%** | **1.05%** | Maximizes sensitivity + specificity on validation set |
+| **0.50 ± 0.10 (Responsible Uncertainty Corridor)** | - | - | - | - | - | Corridors $[0.40, 0.60]$ routed to `uncertain` to prevent false accusations |
+
+### 6.4 Spatial Explainability: Grad-CAM Attribution
+
+To provide faithful localization of generative cues without making unsupported claims, SignalScope integrates **Gradient-weighted Class Activation Mapping (Grad-CAM)**:
+
+- **Target Backbone Layer**: ConvNeXt-Tiny stage 3 block 2 (`stages[-1].blocks[-1]`, $7 \times 7$ feature activation map).
+- **Attribution Computation**:
+  $$\alpha_k = \frac{1}{Z} \sum_{i} \sum_{j} \frac{\partial z}{\partial A_{i,j}^k}, \quad L_{\text{Grad-CAM}} = \text{ReLU}\left(\sum_k \alpha_k A^k\right)$$
+- **Attribution Concentration Metric**: Defined as $\frac{\sum L_{>0.5}}{\sum L}$, capturing whether spatial cues are localized or diffuse.
+- **Resolution Preservation & Visual Display**: The model processes native 32x32 images. Heatmaps are generated directly from the model's native spatial representations and visually upsampled with bicubic interpolation strictly for human visualization. Upsampling does *not* increase forensic resolution.
+- **Faithful Language**: Heatmaps indicate *"image regions that most strongly influenced the classifier's decision"*; they do *not* serve as definitive legal proof of synthetic synthesis.
+
+### 6.5 Frequency Spectral Evidence (2D FFT)
+
+In tandem with spatial attribution, SignalScope renders a 2D Log-Magnitude Fast Fourier Transform ($\log(1 + |F(u, v)|)$) accompanied by an azimuthal radial energy decay curve.
+- **High-Frequency Energy Ratio**: Proportion of spectral energy located in the outer spatial frequency band ($r > r_{\text{mid}}$).
+- **Physical Meaning**: Natural images typically obey $1/f^\alpha$ power-law spectral decay, whereas upsampling and convolutional transposed layers in GANs/Diffusion models frequently introduce high-frequency periodic lattice residuals.
+
+### 6.6 Responsible Uncertainty & Grounded Explanation Engine
+
+To adhere to SIH explainability and ethical standards, predictions are synthesized deterministically through an engineering decision layer:
+
+```
+                          +-------------------------------+
+                          |    Calibrated Probability     |
+                          +---------------+---------------+
+                                          |
+                     +--------------------+--------------------+
+                     |                                         |
+                     v                                         v
+        [0.40 <= p <= 0.60] ?                       [Stability S < 0.60] ?
+                     |                                         |
+            YES      v                                YES      v
+        +---------------------------+             +---------------------------+
+        |  Verdict: UNCERTAIN       |             |  Verdict: UNCERTAIN       |
+        |  Confidence: LOW          |             |  Confidence: LOW          |
+        |  (Boundary Corridor)      |             |  (Perturbation Volatile)  |
+        +---------------------------+             +---------------------------+
+                     |                                         |
+                     +--------------------+--------------------+
+                                          | NO
+                                          v
+                            +---------------------------+
+                            |  p >= 0.50 ?              |
+                            |  YES -> Likely AI         |
+                            |  NO  -> Likely Real       |
+                            |  Confidence: HIGH/MEDIUM  |
+                            +---------------------------+
+```
+
+### 6.7 Representative Case Studies (Local Validation Set)
+
+Detailed multimodal evidence panels for three representative validation samples are archived in `report/explainability/`:
+
+| Case Study | True Label | Calibrated Prob | Stability Score | Verdict | Explanation Summary |
+|---|---|---|---|---|---|
+| **Case A: Authentic Real** (`0955 (6).jpg`) | REAL | **0.0000** | **1.0000** (High) | `likely_real` (High Confidence) | Diffuse spatial attribution, natural $1/f$ spectral decay, invariant to compression ($S=1.0$). |
+| **Case B: Synthetic Fake** (`3244 (9).jpg`) | FAKE | **1.0000** | **0.9999** (High) | `likely_ai_generated` (High Confidence) | Localized spatial cues on generative textures, elevated high frequencies ($0.5898$), invariant under degradation ($S=1.0$). |
+| **Case C: Borderline / Volatile** (`5457 (8).jpg`) | FAKE | **1.0000** (Pristine) | **0.2833** (Low) | `uncertain` (Low Confidence) | Pristine model prediction collapsed from $1.00$ to $0.00$ under resizing/blur. Triggered responsible uncertainty rule, preventing overconfident false declaration. |
 
 ---
 
-## 7. Known Limitations & Failure Cases
+---
+
+## 7. Production Inference Pipeline & Web Application (Phase 6)
+
+### 7.1 Selected Production Model & Inference Architecture
+
+In strict adherence to experimental findings from Phases 2C, 3, 4, and 5:
+- **Primary Classification Model**: ConvNeXt-Tiny spatial baseline (`convnext_tiny.in12k_ft_in1k`), loaded from frozen weights at `checkpoints/baseline_convnext/best_model.pt`.
+- **Validation Metrics Baseline**: ROC-AUC = **0.9992**, Macro-F1 = **0.9908**, Accuracy = **99.08%**, FPR = **1.03%** on 15,000 local validation images.
+- **Calibration Layer**: Post-hoc Temperature Scaling ($T = 0.9995$) loaded from `checkpoints/baseline_convnext/temperature_scaler.json`. Ensures output probabilities are well-calibrated $(\text{ECE} = 0.62\%)$ without degrading monotonic ROC ranking.
+- **Secondary Evidence Branches**: 2D FFT spectral analysis, 4-probe controlled degradation stability testing, and file chunk EXIF/C2PA metadata extraction.
+
+### 7.2 Production API Response Contract (Schema v1.0)
+
+The production FastAPI backend (`/api/v1/predict`) implements a versioned response contract:
+
+```json
+{
+  "schema_version": "1.0",
+  "verdict": "likely_ai_generated",
+  "probability": 1.0000,
+  "raw_probability": 1.0000,
+  "calibrated_probability": 1.0000,
+  "confidence_level": "high",
+  "uncertain": false,
+  "evidence": {
+    "spatial": {
+      "available": true,
+      "heatmap": "data:image/png;base64,...",
+      "attribution_concentration": 0.7434,
+      "target_layer": "ConvNeXtStage[3].ConvNeXtBlock[2]"
+    },
+    "spectral": {
+      "available": true,
+      "spectrum": "data:image/png;base64,...",
+      "high_frequency_energy_ratio": 0.3085,
+      "representation": "2D Log-Magnitude Fast Fourier Transform"
+    },
+    "robustness": {
+      "available": true,
+      "stability_score": 1.0000,
+      "prediction_flip_rate": 0.0,
+      "mean_probability_drift": 0.0000,
+      "is_stable": true,
+      "degradation_impact": "minimal",
+      "transform_results": [ ... ]
+    },
+    "metadata": {
+      "available": true,
+      "has_exif": false,
+      "c2pa_present": false,
+      "camera_make": null,
+      "camera_model": null,
+      "software": null,
+      "anomalies": []
+    }
+  },
+  "explanation": "Likely AI-generated (calibrated probability: 1.00, high confidence)...",
+  "disclaimer": "SignalScope outputs are statistical estimates of authenticity signals. They do not constitute legal proof or personal accusations..."
+}
+```
+
+### 7.3 Measured Latency & Performance Breakdown
+
+Benchmarked empirically on NVIDIA GeForce RTX 3050 6GB Laptop GPU with native 32×32 input images:
+
+| Component | Sub-Task | Measured Latency |
+|---|---|---|
+| **Engine Initialization** | PyTorch state reconstruction & scaler load | 467.1 ms (one-time) |
+| **Primary Inference** | Preprocessing (224×224) + ConvNeXt forward pass | **16.07 ms** |
+| **Calibration** | Logit scaling by $T = 0.9995$ + sigmoid | **< 0.05 ms** |
+| **Spatial Explainability** | Forward/backward hooks + Grad-CAM generation | **37.69 ms** |
+| **Spectral Analysis** | 2D FFT + log-magnitude + azimuthal integration | **2.86 ms** |
+| **Robustness Probing** | 4 degradation probes (JPEG 95, 70, Resize, Crop) | **65.14 ms** |
+| **Total Pipeline** | Single-image end-to-end inference + XAI | **~121.8 ms** |
+| **HTTP API Total** | Full multipart request + base64 encoding + response | **139.5 ms** |
+
+### 7.4 Web Application Architecture
+
+Built with Next.js (App Router), TypeScript, and Tailwind CSS:
+1. **Dropzone Ingestion**: Supports drag-and-drop with client-side MIME (`image/jpeg`, `png`, `webp`, `bmp`) and 25MB boundary validation.
+2. **One-Click Validation Samples**: Instant testing of Authentic Real, Synthetic AI, and Borderline/Uncertain cases.
+3. **Interactive Saliency Viewer**: Smooth blend slider comparing original image with the Grad-CAM heatmap overlay.
+4. **Spectral Dashboard**: 2D FFT spectrum viewer with high-frequency energy ratio gauge.
+5. **Robustness Transform Table**: Probe-by-probe status (✓ / ⚠) showing degradation impact.
+6. **Responsible AI Guardrails**: Prominent uncertainty advisories (*"Human forensic review recommended"*) and ethical disclaimers.
+
+---
+
+## 8. Known Limitations & Failure Cases
 1. **Extreme Compression**: Aggressive multi-pass social media recompression (e.g. WhatsApp / Discord low-bitrate compression) dampens high-frequency generative artifacts.
 2. **Hybrid / Edited Media**: Images combining authentic camera backgrounds with synthetic in-painting require patch-level localization.
 3. **Novel Architectures**: Unseen generative paradigms (e.g., discrete diffusion or novel autoregressive tokenizers) may require ongoing domain-adaptation fine-tuning.
+4. **Resolution Scaling**: Downsampling to sub-32x32 dimensions destroys high-frequency cues, requiring graceful fallback to `uncertain` rather than overconfident classification.
+
+

@@ -20,3 +20,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: signalscope-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    restart: unless-stopped

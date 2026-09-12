@@ -12,14 +12,20 @@ model:
   dropout_rate: 0.2
   use_frequency_branch: false
 
+dataset:
+  num_workers: 0
+  pin_memory: true
+
 training:
-  epochs: 10
-  batch_size: 32
+  epochs: 5
+  batch_size: 64
   learning_rate: 1.0e-4
   optimizer: "adamw"
   weight_decay: 1.0e-2
   scheduler: "cosine"
+  mixed_precision: true
   checkpoint_dir: "checkpoints/baseline_convnext"
+  output_dir: "runs/baseline_convnext"
   monitor_metric: "val_auc"
 
 evaluation:
