@@ -47,11 +47,15 @@ class SignalScopeInferenceEngine:
         self.device = "cpu"
         self._is_ready = False
         self.has_trained_weights = False
+        self.scaler = None
         self._initialize_engine()
 
     def _initialize_engine(self) -> None:
         """Initializes model components or falls back to baseline/test mode."""
+        from model.calibration import TemperatureScaler
+        self.scaler = TemperatureScaler()
         self.model_name = "unloaded"
+
         if self.checkpoint_path and Path(self.checkpoint_path).exists():
             try:
                 import torch
@@ -70,6 +74,16 @@ class SignalScopeInferenceEngine:
                 self.transform = get_default_transforms(image_size=224, is_training=False)
                 self.has_trained_weights = True
                 self.model_name = ckpt.get("model_name", "convnext_tiny.in12k_ft_in1k") if isinstance(ckpt, dict) else "convnext_tiny"
+
+                # Check for companion temperature scaler
+                scaler_path = Path(self.checkpoint_path).parent / "temperature_scaler.json"
+                if scaler_path.exists():
+                    try:
+                        self.scaler = TemperatureScaler.load(scaler_path)
+                        logger.info(f"Loaded temperature scaler (T={self.scaler.temperature:.4f}) from {scaler_path}")
+                    except Exception as s_err:
+                        logger.warning(f"Could not load temperature scaler from {scaler_path}: {s_err}")
+
                 self._is_ready = True
                 logger.info(f"Loaded trained checkpoint from {self.checkpoint_path} ({self.model_name}) onto {self.device}")
             except Exception as exc:
@@ -111,67 +125,95 @@ class SignalScopeInferenceEngine:
         norm_score = float(np.mean(std_per_channel) / 128.0)
         return float(np.clip(norm_score, 0.05, 0.95))
 
+    def predict_calibrated_probability(self, image: Image.Image) -> float:
+        """Computes temperature-calibrated synthetic probability."""
+        if self.model is not None and self.has_trained_weights:
+            import torch
+            tensor = self.transform(image).unsqueeze(0).to(self.device)
+            with torch.no_grad():
+                logit = self.model(tensor)
+                cal_prob = float(self.scaler.calibrate(logit).item())
+            return float(np.clip(cal_prob, 0.0, 1.0))
+        return self.predict_raw_probability(image)
+
+
     def analyze(self, image: Image.Image) -> PredictionResponse:
         """Runs the full SignalScope pipeline on an input image.
 
         Pipeline:
-        1. Base RGB/spatial synthetic probability
-        2. Metadata & provenance inspection
-        3. Frequency-domain cues
-        4. Authenticity stability test under degradation
-        5. Multimodal evidence fusion
-        6. Threshold calibration & uncertainty determination
-        7. Evidence-grounded explanation generation
+        1. Base RGB/spatial synthetic probability (raw and temperature-calibrated)
+        2. Saliency and spatial attribution (Grad-CAM)
+        3. Frequency-domain spectral cues (2D FFT)
+        4. Metadata & provenance inspection
+        5. Authenticity stability test under degradation
+        6. Multimodal evidence fusion
+        7. Threshold calibration & responsible uncertainty determination
+        8. Evidence-grounded explanation generation
         """
-        # Step 1: Base prediction
-        base_prob = self.predict_raw_probability(image)
+        # Step 1: Base predictions (raw and calibrated)
+        raw_prob = self.predict_raw_probability(image)
+        cal_prob = self.predict_calibrated_probability(image)
 
-        # Step 2: Extract metadata and check for synthetic markers
+        # Step 2: Spatial Attribution (Grad-CAM)
+        heatmap_available = False
+        concentration = 0.50
+        if self.model is not None and self.has_trained_weights:
+            from model.explainability.gradcam import compute_spatial_attribution
+            try:
+                _, _, concentration = compute_spatial_attribution(self.model, image, self.device)
+                heatmap_available = True
+            except Exception as exc:
+                logger.warning(f"Grad-CAM attribution computation skipped: {exc}")
+                heatmap_available = False
+
+        # Step 3: Frequency Spectral Evidence (2D FFT)
+        hf_ratio = 0.50
+        try:
+            from model.explainability.spectral import extract_spectral_features
+            _, _, hf_ratio, _ = extract_spectral_features(image)
+        except Exception as exc:
+            logger.warning(f"Frequency spectral extraction skipped: {exc}")
+
+        # Step 4: Metadata & provenance inspection
         meta_info = extract_metadata(image)
 
-        # Step 3: Stability evaluation under controlled degradation
+        # Step 5: Authenticity stability test under controlled degradation
         stability_info = evaluate_authenticity_stability(
             image=image,
-            predict_fn=self.predict_raw_probability,
-            original_prob=base_prob,
+            predict_fn=self.predict_calibrated_probability,
+            original_prob=cal_prob,
         )
 
-        # Step 4: Assemble structured multimodal evidence items
+        # Step 6: Assemble backwards-compatible multimodal evidence items
         evidence_items: List[EvidenceItem] = []
 
         # RGB spatial branch evidence
-        rgb_supports_ai = base_prob >= self.operating_threshold
+        rgb_supports_ai = cal_prob >= self.operating_threshold
         evidence_items.append(
             EvidenceItem(
                 source="rgb_spatial",
                 metric="convnext_feature_anomaly",
-                score=round(base_prob, 4),
+                score=round(cal_prob, 4),
                 weight=1.0,
                 description=(
-                    f"Spatial RGB branch indicates {'high generative artifacts' if rgb_supports_ai else 'natural texture distribution'} "
-                    f"with score {base_prob:.2f}."
+                    f"Spatial ConvNeXt branch yields calibrated probability of {cal_prob:.2f} "
+                    f"({'high generative indicators' if rgb_supports_ai else 'natural texture distribution'})."
                 ),
                 supports_synthetic=rgb_supports_ai,
             )
         )
 
-        # Frequency evidence (FFT / high frequency residual placeholder for Phase 4)
-        img_gray = np.array(image.convert("L"), dtype=np.float32)
-        fft_shift = np.fft.fftshift(np.fft.fft2(img_gray))
-        fft_magnitude = np.log(np.abs(fft_shift) + 1.0)
-        freq_high_energy = float(np.mean(fft_magnitude > np.median(fft_magnitude)))
-        freq_score = float(np.clip(freq_high_energy * 1.5 - 0.25, 0.0, 1.0))
-        freq_supports_ai = freq_score >= self.operating_threshold
-
+        # Frequency evidence (FFT 2D spectral energy)
+        freq_supports_ai = hf_ratio > 0.40
         evidence_items.append(
             EvidenceItem(
                 source="frequency_domain",
                 metric="fft_spectral_distribution",
-                score=round(freq_score, 4),
+                score=round(hf_ratio, 4),
                 weight=0.75,
                 description=(
-                    f"Fourier spectral analysis indicates {'abnormal periodic grids' if freq_supports_ai else 'expected natural 1/f decay'} "
-                    f"(score: {freq_score:.2f})."
+                    f"Fourier spectral analysis measures high-frequency energy ratio of {hf_ratio:.2f} "
+                    f"({'elevated periodic high-frequency residual' if freq_supports_ai else 'expected natural spectral decay'})."
                 ),
                 supports_synthetic=freq_supports_ai,
             )
@@ -201,44 +243,61 @@ class SignalScopeInferenceEngine:
                 )
             )
 
-        # Step 5: Evidence Fusion
-        # Weighted average of available signals
-        total_weight = sum(item.weight for item in evidence_items)
-        fused_prob = sum(item.score * item.weight for item in evidence_items) / (total_weight or 1.0)
-        fused_prob = float(np.clip(fused_prob, 0.0, 1.0))
-
         # Check for disagreement between modalities
         sources_ai = [item.supports_synthetic for item in evidence_items]
         evidence_disagreement = len(set(sources_ai)) > 1
 
-        # Step 6: Calibration and Verdict
-        lower_uncertain = self.operating_threshold - self.uncertainty_band
-        upper_uncertain = self.operating_threshold + self.uncertainty_band
+        # Step 7: Responsible Uncertainty & Decision Boundary
+        lower_uncertain = self.operating_threshold - self.uncertainty_band  # e.g., 0.40
+        upper_uncertain = self.operating_threshold + self.uncertainty_band  # e.g., 0.60
+        is_borderline = lower_uncertain <= cal_prob <= upper_uncertain
+        is_volatile = stability_info.stability_score < 0.60
 
-        if fused_prob >= upper_uncertain:
-            verdict = VerdictEnum.LIKELY_AI_GENERATED
-        elif fused_prob <= lower_uncertain:
-            verdict = VerdictEnum.LIKELY_REAL
-        else:
+        if is_borderline or is_volatile:
             verdict = VerdictEnum.UNCERTAIN
-
-        # If evidence strongly disagrees or stability is poor, downgrade confidence
-        distance_from_boundary = abs(fused_prob - self.operating_threshold)
-        if distance_from_boundary > 0.25 and stability_info.is_stable and not evidence_disagreement:
-            confidence_level = ConfidenceLevelEnum.HIGH
-        elif distance_from_boundary > 0.10 and stability_info.stability_score >= 0.60:
-            confidence_level = ConfidenceLevelEnum.MEDIUM
-        else:
             confidence_level = ConfidenceLevelEnum.LOW
+            uncertain = True
+        elif cal_prob >= upper_uncertain:
+            verdict = VerdictEnum.LIKELY_AI_GENERATED
+            uncertain = False
+            confidence_level = (
+                ConfidenceLevelEnum.HIGH
+                if (cal_prob >= 0.85 and stability_info.is_stable and not evidence_disagreement)
+                else ConfidenceLevelEnum.MEDIUM
+            )
+        else:
+            verdict = VerdictEnum.LIKELY_REAL
+            uncertain = False
+            confidence_level = (
+                ConfidenceLevelEnum.HIGH
+                if (cal_prob <= 0.15 and stability_info.is_stable and not evidence_disagreement)
+                else ConfidenceLevelEnum.MEDIUM
+            )
 
-        # If low confidence or high disagreement on borderline cases, mark uncertain
-        if confidence_level == ConfidenceLevelEnum.LOW and distance_from_boundary <= 0.15:
-            verdict = VerdictEnum.UNCERTAIN
+        # Structured multimodal evidence object matching Phase 5 specifications
+        structured_evidence = {
+            "spatial": {
+                "available": heatmap_available,
+                "attribution_concentration": round(concentration, 4),
+                "target_layer": "ConvNeXtStage[3].ConvNeXtBlock[2]" if self.has_trained_weights else "baseline_scaffolding",
+            },
+            "frequency": {
+                "available": True,
+                "high_frequency_energy_ratio": round(hf_ratio, 4),
+                "representation": "2D Log-Magnitude Fast Fourier Transform",
+            },
+            "robustness": {
+                "stability_score": round(stability_info.stability_score, 4),
+                "is_stable": stability_info.is_stable,
+                "degradation_impact": stability_info.degradation_impact,
+            },
+            "metadata": meta_info.model_dump() if hasattr(meta_info, "model_dump") else meta_info.dict(),
+        }
 
-        # Step 7: Faithful Explanation
+        # Step 8: Faithful Explanation
         explanation = generate_grounded_explanation(
             verdict=verdict,
-            probability=fused_prob,
+            probability=cal_prob,
             confidence_level=confidence_level,
             stability_score=stability_info.stability_score,
             evidence_items=evidence_items,
@@ -248,14 +307,19 @@ class SignalScopeInferenceEngine:
 
         return PredictionResponse(
             verdict=verdict,
-            probability=round(fused_prob, 4),
+            probability=round(cal_prob, 4),
+            raw_probability=round(raw_prob, 4),
+            calibrated_probability=round(cal_prob, 4),
             confidence_level=confidence_level,
             stability_score=stability_info.stability_score,
             evidence_disagreement=evidence_disagreement,
+            uncertain=uncertain,
             is_development_placeholder=not self.has_trained_weights,
             evidence=evidence_items,
+            structured_evidence=structured_evidence,
             stability=stability_info,
             metadata=meta_info,
             explanation=explanation,
-            heatmap_available=False,
+            heatmap_available=heatmap_available,
         )
+

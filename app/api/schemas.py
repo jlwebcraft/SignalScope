@@ -67,14 +67,21 @@ class PredictionResponse(BaseModel):
     """Comprehensive, evidence-grounded authenticity assessment response."""
     verdict: VerdictEnum = Field(..., description="Authenticity verdict ('likely_ai_generated', 'likely_real', 'uncertain')")
     probability: float = Field(..., ge=0.0, le=1.0, description="Calibrated synthetic probability (0.0=real, 1.0=synthetic)")
+    raw_probability: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Uncalibrated sigmoid probability")
+    calibrated_probability: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Temperature-scaled calibrated probability")
     confidence_level: ConfidenceLevelEnum = Field(..., description="Confidence level based on probability margin and stability")
     stability_score: float = Field(..., ge=0.0, le=1.0, description="Authenticity stability score under transformations")
     evidence_disagreement: bool = Field(..., description="True if evidence sources (RGB vs Frequency vs Metadata) conflict")
+    uncertain: bool = Field(default=False, description="Whether prediction is flagged as uncertain due to boundary corridor or volatility")
     is_development_placeholder: bool = Field(
         default=True,
         description="True if inference ran without trained checkpoint weights (heuristic/development scaffolding)"
     )
-    evidence: List[EvidenceItem] = Field(default_factory=list, description="Structured multimodal evidence")
+    evidence: List[EvidenceItem] = Field(default_factory=list, description="Structured multimodal evidence items")
+    structured_evidence: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Modality-grouped evidence structure containing spatial, frequency, robustness, and metadata details"
+    )
     stability: AuthenticityStabilityInfo = Field(..., description="Detailed stability breakdown across transformations")
     metadata: MetadataInfo = Field(..., description="Extracted metadata and provenance")
     explanation: str = Field(..., description="Faithful natural-language explanation grounded in evidence")
@@ -87,6 +94,24 @@ class PredictionResponse(BaseModel):
         ),
         description="Mandatory ethical disclaimer"
     )
+
+    def to_evidence_object(self) -> Dict[str, Any]:
+        """Converts response into the Phase 5 standard structured evidence dictionary."""
+        return {
+            "verdict": self.verdict.value if hasattr(self.verdict, "value") else str(self.verdict),
+            "raw_probability": self.raw_probability if self.raw_probability is not None else self.probability,
+            "calibrated_probability": self.calibrated_probability if self.calibrated_probability is not None else self.probability,
+            "confidence_level": self.confidence_level.value if hasattr(self.confidence_level, "value") else str(self.confidence_level),
+            "evidence": self.structured_evidence or {
+                "spatial": {"available": self.heatmap_available},
+                "frequency": {"available": True},
+                "robustness": {"stability_score": self.stability_score},
+                "metadata": self.metadata.model_dump() if hasattr(self.metadata, "model_dump") else {},
+            },
+            "explanation": self.explanation,
+            "uncertain": self.uncertain,
+        }
+
 
 
 class HealthResponse(BaseModel):
