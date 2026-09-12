@@ -4,6 +4,8 @@ Integrates RGB spatial branch, frequency branch, metadata extraction,
 and authenticity stability testing into a unified evidence fusion verdict.
 """
 
+import base64
+import io
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import numpy as np
@@ -21,8 +23,17 @@ from app.services.stability import evaluate_authenticity_stability
 from app.utils.logger import logger
 
 
+def pil_to_base64_data_uri(img: Image.Image, format: str = "PNG") -> str:
+    """Encodes PIL Image as Base64 data URI string."""
+    buffered = io.BytesIO()
+    img.save(buffered, format=format)
+    img_str = base64.b64encode(buffered.getvalue()).decode("ascii")
+    return f"data:image/{format.lower()};base64,{img_str}"
+
+
 class SignalScopeInferenceEngine:
     """Orchestrates image authenticity inference and multimodal evidence fusion."""
+
 
     def __init__(
         self,
@@ -156,21 +167,25 @@ class SignalScopeInferenceEngine:
 
         # Step 2: Spatial Attribution (Grad-CAM)
         heatmap_available = False
+        heatmap_b64 = None
         concentration = 0.50
         if self.model is not None and self.has_trained_weights:
             from model.explainability.gradcam import compute_spatial_attribution
             try:
-                _, _, concentration = compute_spatial_attribution(self.model, image, self.device)
+                _, overlay_pil, concentration = compute_spatial_attribution(self.model, image, self.device)
                 heatmap_available = True
+                heatmap_b64 = pil_to_base64_data_uri(overlay_pil)
             except Exception as exc:
                 logger.warning(f"Grad-CAM attribution computation skipped: {exc}")
                 heatmap_available = False
 
         # Step 3: Frequency Spectral Evidence (2D FFT)
         hf_ratio = 0.50
+        spectrum_b64 = None
         try:
             from model.explainability.spectral import extract_spectral_features
-            _, _, hf_ratio, _ = extract_spectral_features(image)
+            _, _, hf_ratio, spectrum_pil = extract_spectral_features(image)
+            spectrum_b64 = pil_to_base64_data_uri(spectrum_pil)
         except Exception as exc:
             logger.warning(f"Frequency spectral extraction skipped: {exc}")
 
@@ -183,6 +198,15 @@ class SignalScopeInferenceEngine:
             predict_fn=self.predict_calibrated_probability,
             original_prob=cal_prob,
         )
+
+        # Compute flip rate and mean drift
+        drift_values = [res.delta_from_original for res in stability_info.transform_results]
+        mean_drift = float(np.mean(drift_values)) if drift_values else 0.0
+        flips = [
+            1 for res in stability_info.transform_results
+            if (res.predicted_probability >= self.operating_threshold) != (cal_prob >= self.operating_threshold)
+        ]
+        flip_rate = float(len(flips) / len(stability_info.transform_results)) if stability_info.transform_results else 0.0
 
         # Step 6: Assemble backwards-compatible multimodal evidence items
         evidence_items: List[EvidenceItem] = []
@@ -212,7 +236,7 @@ class SignalScopeInferenceEngine:
                 score=round(hf_ratio, 4),
                 weight=0.75,
                 description=(
-                    f"Fourier spectral analysis measures high-frequency energy ratio of {hf_ratio:.2f} "
+                    f"Fourier spectral analysis observed high-frequency energy ratio of {hf_ratio:.2f} "
                     f"({'elevated periodic high-frequency residual' if freq_supports_ai else 'expected natural spectral decay'})."
                 ),
                 supports_synthetic=freq_supports_ai,
@@ -274,25 +298,44 @@ class SignalScopeInferenceEngine:
                 else ConfidenceLevelEnum.MEDIUM
             )
 
-        # Structured multimodal evidence object matching Phase 5 specifications
-        structured_evidence = {
+        # Structured multimodal evidence object matching Phase 6 Section 7 contract
+        evidence = {
             "spatial": {
                 "available": heatmap_available,
-                "attribution_concentration": round(concentration, 4),
+                "heatmap": heatmap_b64,
+                "attribution_concentration": round(concentration, 4) if concentration is not None else None,
                 "target_layer": "ConvNeXtStage[3].ConvNeXtBlock[2]" if self.has_trained_weights else "baseline_scaffolding",
             },
-            "frequency": {
+            "spectral": {
                 "available": True,
-                "high_frequency_energy_ratio": round(hf_ratio, 4),
+                "spectrum": spectrum_b64,
+                "high_frequency_energy_ratio": round(hf_ratio, 4) if hf_ratio is not None else None,
                 "representation": "2D Log-Magnitude Fast Fourier Transform",
             },
             "robustness": {
+                "available": True,
                 "stability_score": round(stability_info.stability_score, 4),
+                "prediction_flip_rate": round(flip_rate, 4),
+                "mean_probability_drift": round(mean_drift, 4),
                 "is_stable": stability_info.is_stable,
                 "degradation_impact": stability_info.degradation_impact,
+                "transform_results": [
+                    t.model_dump() if hasattr(t, "model_dump") else t.dict()
+                    for t in stability_info.transform_results
+                ],
             },
-            "metadata": meta_info.model_dump() if hasattr(meta_info, "model_dump") else meta_info.dict(),
+            "metadata": {
+                "available": True,
+                "has_exif": meta_info.has_exif,
+                "c2pa_present": meta_info.c2pa_detected,
+                "camera_make": meta_info.camera_make,
+                "camera_model": meta_info.camera_model,
+                "software": meta_info.software,
+                "anomalies": meta_info.anomalies,
+            },
         }
+        # Frequency alias for backwards compatibility
+        evidence["frequency"] = evidence["spectral"]
 
         # Step 8: Faithful Explanation
         explanation = generate_grounded_explanation(
@@ -306,6 +349,7 @@ class SignalScopeInferenceEngine:
         )
 
         return PredictionResponse(
+            schema_version="1.0",
             verdict=verdict,
             probability=round(cal_prob, 4),
             raw_probability=round(raw_prob, 4),
@@ -315,11 +359,14 @@ class SignalScopeInferenceEngine:
             evidence_disagreement=evidence_disagreement,
             uncertain=uncertain,
             is_development_placeholder=not self.has_trained_weights,
-            evidence=evidence_items,
-            structured_evidence=structured_evidence,
+            evidence=evidence,
+            structured_evidence=evidence,
+            evidence_items=evidence_items,
             stability=stability_info,
             metadata=meta_info,
             explanation=explanation,
             heatmap_available=heatmap_available,
         )
+
+
 

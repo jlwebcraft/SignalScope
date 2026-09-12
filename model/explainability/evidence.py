@@ -231,12 +231,13 @@ class EvidenceExtractor:
         # Robustness sentence
         if stability_score >= 0.85:
             sentences.append(
-                f"The assessment remained highly consistent under controlled degradation tests (Authenticity Stability: {stability_score:.2f})."
+                f"Prediction stability was high under the transformations evaluated for this sample (Authenticity Stability: {stability_score:.2f})."
             )
         else:
             sentences.append(
-                f"The assessment exhibited moderate drift under compression or resizing probes (Authenticity Stability: {stability_score:.2f})."
+                f"The prediction exhibited moderate drift under the tested compression or resizing probes (Authenticity Stability: {stability_score:.2f})."
             )
 
         sentences.append("This is an evidence-grounded likelihood assessment, not absolute proof.")
+
         return " ".join(sentences)

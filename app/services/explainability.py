@@ -54,17 +54,17 @@ def generate_grounded_explanation(
     stability_pct = round(stability_score * 100, 1)
     if stability_score >= 0.80:
         sentences.append(
-            f"Authenticity stability is high ({stability_pct}%), indicating the prediction remains consistent "
-            f"under standard compression, scaling, and re-encoding."
+            f"Prediction stability was high ({stability_pct}%) under the transformations evaluated for this sample, "
+            f"maintaining consistent attribution across tested JPEG and resolution perturbations."
         )
     elif stability_score >= 0.60:
         sentences.append(
-            f"Authenticity stability is moderate ({stability_pct}%); common web compressions cause minor variations."
+            f"Prediction stability was moderate ({stability_pct}%); tested compressions or resizing caused minor probability drift."
         )
     else:
         sentences.append(
-            f"Authenticity stability is low ({stability_pct}%); transformations like resizing or JPEG compression "
-            f"significantly shift the prediction, indicating sensitive or fragile visual cues."
+            f"Prediction stability was low ({stability_pct}%); tested transformations like resizing or recompression "
+            f"shifted the prediction, indicating sensitive or fragile visual cues."
         )
 
     # Evidence conflict / agreement
@@ -81,10 +81,16 @@ def generate_grounded_explanation(
         )
     elif any("AI" in a or "generator" in a.lower() for a in metadata_info.anomalies):
         sentences.append("Metadata inspection revealed synthetic generator tags or parameter blocks.")
+    else:
+        sentences.append("No Content Credentials or synthetic provenance tags detected.")
 
     # Branch-specific highlights
     key_signals = [item.description for item in evidence_items if item.supports_synthetic]
     if key_signals and verdict == VerdictEnum.LIKELY_AI_GENERATED:
         sentences.append(f"Key contributing factors: {'; '.join(key_signals[:2])}.")
 
+    if verdict == VerdictEnum.UNCERTAIN:
+        sentences.append("Human review recommended before making an adjudication.")
+
     return " ".join(sentences)
+

@@ -88,9 +88,19 @@ def run_prediction(
         print(f" Evidence Conflict      : {'YES' if result.evidence_disagreement else 'NO'}")
         print("-" * 65)
         print(" EVIDENCE BREAKDOWN:")
-        for item in result.evidence:
-            marker = "[AI]" if item.supports_synthetic else "[REAL]"
-            print(f"   * {marker} {item.source} ({item.metric}): score={item.score:.2f} -> {item.description}")
+        if isinstance(result.evidence, list):
+            for item in result.evidence:
+                marker = "[AI]" if getattr(item, "supports_synthetic", False) else "[REAL]"
+                print(f"   * {marker} {item.source} ({item.metric}): score={item.score:.2f} -> {item.description}")
+        elif isinstance(result.evidence, dict):
+            for mod_name, mod_info in result.evidence.items():
+                if isinstance(mod_info, dict):
+                    avail = mod_info.get("available", True)
+                    extra = ", ".join(f"{k}={v}" for k, v in mod_info.items() if k not in ("available", "heatmap", "spectrum", "transform_results"))
+                    print(f"   * [{mod_name.upper()}] Available: {avail}{f' ({extra})' if extra else ''}")
+                elif hasattr(mod_info, "available"):
+                    print(f"   * [{mod_name.upper()}] Available: {mod_info.available}")
+
         print("-" * 65)
         print(" GROUNDED EXPLANATION:")
         print(f"   {result.explanation}")
