@@ -230,8 +230,9 @@ python scripts/verify_production_e2e.py
 ## 7. Production API Endpoints & Response Contract
 
 ### Core Endpoints
-- `GET /health`: Service health, uptime, and GPU device status.
-- `GET /info`: Model architecture (`ConvNeXtTinyDetector`), checkpoint version, calibration temperature ($T=0.9995$), and supported transformations.
+- `GET /health`: Basic service liveness health check (status, version).
+- `GET /ready`: Readiness probe distinguishing HTTP service availability from model checkpoint loading.
+- `GET /info`: Model architecture (`ConvNeXtTinyDetector`), model version identifier (`signalscope-baseline-v1`), checkpoint SHA-256 hash, calibration temperature ($T=0.9995$), and supported transformations.
 - `POST /predict`: Production inference endpoint accepting multipart image upload (`image/jpeg`, `image/png`, `image/webp`, `image/bmp`, max 25MB).
 
 ### Response Schema Contract (`schema_version: "1.0"`)
@@ -281,7 +282,7 @@ SignalScope enforces strict linguistic integrity:
 
 ## 8. Latency & Performance Breakdown
 
-Benchmarked on consumer hardware (NVIDIA GeForce RTX 3050 Laptop GPU, native 32×32 input):
+### Consumer GPU Latency (NVIDIA GeForce RTX 3050 Laptop GPU, native 32×32 input)
 - **Model Loading & Cold Start**: ~467 ms
 - **Primary ConvNeXt Forward Pass**: **16.1 ms**
 - **Temperature Scaling ($T=0.9995$)**: **< 0.05 ms**
@@ -291,9 +292,35 @@ Benchmarked on consumer hardware (NVIDIA GeForce RTX 3050 Laptop GPU, native 32�
 - **Total Single-Image Inference Pipeline**: **~121.8 ms**
 - **Full HTTP Request-Response Latency**: **~139.5 ms**
 
+### Cloud CPU Latency (Standard x86_64 CPU Inference, no GPU required)
+- **Cold Start & Deserialization**: ~4.84 s
+- **Single ConvNeXt Forward Pass**: **61.5 ms**
+- **Total Analyze (XAI Grad-CAM + 4-Probe Stability)**: **2.50 s**
+- **Full HTTP Request-Response Latency**: **~2.65 s**
+
 ---
 
-## 9. Official Dataset Layout & Anti-Leakage Protocol
+## 9. Deployment Architecture & Artifact Management
+
+SignalScope is engineered for reproducible deployment across cloud environments without hard-coding local filesystem paths:
+
+### 1. External Model Artifact Strategy
+- The production checkpoint (`best_model.pt`, 318.61 MB, SHA-256 `c2e7881e9206...`) and temperature scaler (`temperature_scaler.json`) are resolved dynamically via `app.inference.artifacts.ModelArtifactManager`:
+  1. Local disk path `checkpoints/baseline_convnext/best_model.pt`.
+  2. Local persistent cache `cache/models/best_model.pt`.
+  3. Remote URL download (`MODEL_URL` / `SCALER_URL`) with automatic SHA-256 integrity verification.
+- The service fails safely and reports HTTP 503 (`not_ready`) on `/ready` if model artifacts cannot be verified.
+
+### 2. Containerized Deployment (Python 3.13-slim)
+- Production Dockerfile uses `python:3.13-slim` matching the verified development runtime.
+- Runs as non-root user `appuser` (UID 1000) for security hardening.
+- Dynamic port binding via `${PORT:-8000}`.
+- Comprehensive platform research and memory budgeting documented in [`docs/deployment_architecture.md`](docs/deployment_architecture.md).
+- Hackathon 3–5 minute presentation script documented in [`docs/demo_script.md`](docs/demo_script.md).
+
+---
+
+## 10. Official Dataset Layout & Anti-Leakage Protocol
 
 SignalScope consumes the official dataset through a decoupled, configurable data root:
 - **Default Location**: `C:\Programming\SignalScope-data` (or configurable via `SIGNALSCOPE_DATA_ROOT` environment variable / `model/configs/default.yaml`).
@@ -314,7 +341,7 @@ SignalScope consumes the official dataset through a decoupled, configurable data
 
 ---
 
-## 10. Empirical Baseline Model Results (Phase 2C)
+## 11. Empirical Baseline Model Results (Phase 2C)
 
 Trained strictly on the local training partition (85,000 train / 15,000 val) without touching `test/`:
 - **Backbone**: `convnext_tiny.in12k_ft_in1k` (pure spatial transfer learning)
@@ -328,7 +355,7 @@ Trained strictly on the local training partition (85,000 train / 15,000 val) wit
 
 ---
 
-## 11. Known Limitations
+## 12. Known Limitations
 
 1. **Resolution Scale**: Model is trained on 32×32 patches; upsampled Grad-CAM heatmaps represent visual localization regions rather than high-frequency microscopic forensic artifacts.
 2. **Degradation Sensitivity**: Aggressive resizing and downsampling can induce prediction drift on borderline samples, captured by the Authenticity Stability score.
@@ -336,7 +363,7 @@ Trained strictly on the local training partition (85,000 train / 15,000 val) wit
 
 ---
 
-## 12. Development Roadmap & Phased Execution
+## 13. Development Roadmap & Phased Execution
 
 - [x] **Phase 1 — Foundation**: Repository structure, configuration, logging, testing suite, Docker, schemas, baseline CLI.
 - [x] **Phase 2A — Reproducible ML Stack**: Python 3.13 isolated Conda environment (`signalscope`), PyTorch 2.6.0+cu124, timm, RTX 3050 GPU verification.
@@ -346,7 +373,8 @@ Trained strictly on the local training partition (85,000 train / 15,000 val) wit
 - [x] **Phase 4 — Robustness & Authenticity Stability**: Controlled degradation benchmark across 7 conditions (JPEG 95, 85, 70, Resize, Screenshot, Light Edit). Bounded Authenticity Stability Score $S \in [0, 1]$ ($S = C \times (1 - 0.5(\bar{D} + D_{\max}))$, Fusion mean $S = 0.6885$, Baseline mean $S = 0.6820$).
 - [x] **Phase 5 — Calibration + Faithful Explainability**: Post-hoc probability calibration (Temperature Scaling $T=0.9995$, ECE $0.0062$, Brier $0.00795$ on 15k validation set), Grad-CAM spatial attribution on ConvNeXt-Tiny stage 3 block 2, 2D FFT spectral visualizer with azimuthal decay profiles, structured multimodal evidence representation, responsible uncertainty framework (borderline $[0.40, 0.60]$ corridor, volatility threshold $S < 0.60$), and deterministic evidence-grounded explanation synthesis.
 - [x] **Phase 6 — Production Inference + Web Application**: FastAPI production serving, Next.js 16 + TypeScript + Tailwind CSS web interface, interactive Grad-CAM heatmap blending, 2D FFT spectrum viewer, transformation robustness benchmark matrix, EXIF metadata inspector, full docker compose stack, and sub-150ms end-to-end latency.
-- [ ] **Phase 7 — Deployment + Public Demo**: Production deployment, public demonstration endpoints, and final hackathon presentation assets.
+- [x] **Phase 7 — Deployment + Public Demo**: Reproducible Python 3.13-slim production Docker container, non-root execution, readiness probe (`/ready`), model artifact resolution with SHA-256 verification and local caching, CPU inference verification (61ms forward pass), cloud host feasibility research (Hugging Face Spaces / Render Starter / Vercel), and 3-5 minute demo recording script.
+- [ ] **Phase 8 — Final Hardening, Demo, Metrics, and Submission**: End-to-end judge reproducibility audit (< 10 minutes), final evaluation metrics packaging, and hackathon submission.
 
 > [!NOTE]
 > **Validation Notice**: All reported calibration, explainability, stability, and inference metrics are local validation results evaluated on partitions constructed from `train/`. They are not the organizer's unseen-generator test results. The official held-out test partition `test/` remains strictly untouched.
