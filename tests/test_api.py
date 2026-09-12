@@ -24,6 +24,14 @@ def test_health_endpoint():
     assert data["status"] == "healthy"
 
 
+def test_ready_endpoint():
+    response = client.get("/ready")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ready"
+    assert "model_version" in data
+
+
 def test_api_v1_health():
     response = client.get("/api/v1/health")
     assert response.status_code == 200
@@ -32,13 +40,25 @@ def test_api_v1_health():
     assert data["version"] == "0.1.0"
 
 
+def test_api_v1_ready():
+    response = client.get("/api/v1/ready")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ready"
+    assert data["model_loaded"] is True
+    assert "model_version" in data
+
+
 def test_api_v1_info():
     response = client.get("/api/v1/info")
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "SignalScope"
+    assert "model_metadata" in data
+    assert data["model_metadata"]["model_version"] == "signalscope-baseline-v1"
     assert "ethical_scope" in data
     assert data["ethical_scope"]["is_identity_system"] is False
+
 
 
 def test_predict_endpoint_valid_image(sample_image_bytes: bytes):

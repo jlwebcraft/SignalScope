@@ -3,7 +3,8 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 from PIL import Image
 
-from app.api.schemas import HealthResponse, PredictionResponse
+from app.api.schemas import HealthResponse, PredictionResponse, ReadyResponse
+from app.inference.artifacts import ModelArtifactManager
 from app.inference.engine import SignalScopeInferenceEngine
 from app.utils.image import ImageValidationError, load_image_safely
 from app.utils.logger import logger
@@ -19,7 +20,7 @@ ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/bmp"}
 
 @router.get("/health", response_model=HealthResponse, summary="API Health Check")
 async def health_check() -> HealthResponse:
-    """Returns service health status and device readiness."""
+    """Returns basic service health status and device readiness."""
     return HealthResponse(
         status="healthy",
         service="SignalScope Authenticity API",
@@ -29,20 +30,49 @@ async def health_check() -> HealthResponse:
     )
 
 
+@router.get("/ready", response_model=ReadyResponse, summary="Readiness Probe")
+async def readiness_check() -> ReadyResponse:
+    """Readiness check distinguishing HTTP service availability from model readiness."""
+    if not inference_engine.is_ready or not inference_engine.has_trained_weights:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Inference engine is not fully initialized or weights are unavailable.",
+        )
+    return ReadyResponse(
+        status="ready",
+        model_version=ModelArtifactManager.get_version_info()["model_version"],
+        model_loaded=inference_engine.is_ready,
+        has_trained_weights=inference_engine.has_trained_weights,
+        device=inference_engine.device,
+        message="SignalScope production inference engine is fully initialized and operational.",
+    )
+
+
 @router.get("/info", summary="System Information & Guidelines")
 async def get_system_info():
-    """Returns system parameters, ethical scope, and supported modalities."""
+    """Returns system parameters, model metadata, ethical scope, and supported modalities."""
+    version_info = ModelArtifactManager.get_version_info()
     return {
         "name": "SignalScope",
         "description": "Telling Real From Synthetic in the Age of Generative Media",
         "hackathon": "SIH 2026 Internal Hackathon",
         "schema_version": "1.0",
+        "model_metadata": {
+            "model_version": version_info["model_version"],
+            "architecture": version_info["architecture"],
+            "backbone": version_info["backbone"],
+            "weights_sha256": version_info["weights_sha256"],
+            "device": inference_engine.device,
+            "has_trained_weights": inference_engine.has_trained_weights,
+            "calibration_temperature": version_info["calibration_temperature"],
+        },
         "modalities": ["rgb_spatial", "frequency_fft", "metadata_provenance", "authenticity_stability"],
         "supported_formats": ["JPEG", "PNG", "WEBP", "BMP"],
         "max_upload_size_mb": 25,
         "primary_model": inference_engine.model_name,
         "operating_threshold": inference_engine.operating_threshold,
         "uncertainty_band": inference_engine.uncertainty_band,
+        "uncertainty_policy": "Volatile if Authenticity Stability S < 0.60 or calibrated probability in [0.40, 0.60]",
         "ethical_scope": {
             "is_identity_system": False,
             "claims_about_identifiable_people": False,
