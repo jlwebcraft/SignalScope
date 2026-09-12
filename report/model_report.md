@@ -219,8 +219,110 @@ $$S = C \times \left(1 - \frac{\bar{D} + D_{\max}}{2}\right)$$
 
 ---
 
-## 6. Saliency & Explainability
-*(To be populated in Phase 7 with Grad-CAM visualizations and frequency spectrum plots)*
+## 6. Calibration & Faithful Explainability (Phase 5)
+
+### 6.1 Calibration Methodology & Anti-Leakage Protocol
+
+> [!IMPORTANT]
+> **Anti-Leakage & Partition Integrity Declaration**:
+> Calibration was fitted on a separate subset of the official training partition (`train/`, `seed=42`) and evaluated on the untouched local validation set (15,000 images).
+> **The organizer-held-out test partition (`C:\Programming\SignalScope-data\test`) was strictly NOT accessed or used.**
+
+Raw sigmoid outputs from deep neural networks trained with cross-entropy often suffer from overconfidence. To produce reliable probabilities, SignalScope applies **post-hoc Temperature Scaling** to the primary ConvNeXt spatial classifier:
+
+$$\hat{p} = \sigma\left(\frac{z}{T}\right)$$
+
+where $z$ is the model logit and $T > 0$ is the learned scalar temperature parameter optimizing Negative Log-Likelihood (NLL) on a held-out calibration set.
+
+#### Partition Design:
+- **Total Official Training Pool**: 100,000 images (`train/`)
+- **Untouched Local Validation Split**: 15,000 images (7,500 real, 7,500 fake) — preserved as the final evaluation benchmark.
+- **Training Subset**: 80,000 images (used for model parameter training).
+- **Calibration Split**: 5,000 images (2,500 real, 2,500 fake) drawn deterministically from the remaining training portion (`seed=42`).
+
+### 6.2 Empirical Calibration Results (15,000 Untouched Local Validation Samples)
+
+| Metric | Pre-Calibration (Raw Sigmoid) | Post-Calibration (Temperature Scaling) | Delta / Impact |
+|---|---|---|---|
+| **Fitted Temperature ($T$)** | 1.0000 (Identity) | **0.9995** | Scale factor $\approx 1.00$ |
+| **Brier Score** | **0.00795** | **0.00795** | Stable optimal quadratic score |
+| **Expected Calibration Error (ECE)** | **0.0062** (0.62%) | **0.0062** (0.62%) | Exceptional intrinsic calibration |
+| **Maximum Calibration Error (MCE)** | **0.2688** | **0.2688** | Confined to isolated boundary bins |
+| **ROC-AUC** | **0.9995** | **0.9995** | Monotonic rank-preserving ($100\%$ preserved) |
+| **Macro-F1** | **0.9908** | **0.9908** | Invariant across monotonic scaling |
+| **Accuracy** | **99.08%** | **99.08%** | Invariant across monotonic scaling |
+| **FPR** | **1.03%** | **1.03%** | Preserved at default operating threshold |
+
+#### Calibration Insights:
+1. **Intrinsic Reliability**: The ConvNeXt baseline with weight decay ($10^{-2}$) and cosine learning rate scheduling already achieves an exceptionally well-calibrated posterior ($T = 0.9995 \approx 1.0$, $\text{ECE} = 0.62\%$).
+2. **Rank Preservation**: Post-hoc temperature scaling is strictly monotonic, preserving optimal ranking ($\text{ROC-AUC} = 0.9995$) while ensuring rigorous probabilistic meaning for downstream thresholding and evidence weighting.
+
+### 6.3 Operating Threshold Analysis
+
+| Threshold Operating Point | Accuracy | Macro-F1 | Precision | Recall | FPR | Selection Rationale |
+|---|---|---|---|---|---|---|
+| **0.50 (Default / Production Reference)** | **99.08%** | **0.9908** | **98.98%** | **99.19%** | **1.03%** | Standard neutral probabilistic decision boundary |
+| **0.4214 (Optimal Youden's J)** | **99.09%** | **0.9909** | **98.95%** | **99.24%** | **1.05%** | Maximizes sensitivity + specificity on validation set |
+| **0.50 ± 0.10 (Responsible Uncertainty Corridor)** | - | - | - | - | - | Corridors $[0.40, 0.60]$ routed to `uncertain` to prevent false accusations |
+
+### 6.4 Spatial Explainability: Grad-CAM Attribution
+
+To provide faithful localization of generative cues without making unsupported claims, SignalScope integrates **Gradient-weighted Class Activation Mapping (Grad-CAM)**:
+
+- **Target Backbone Layer**: ConvNeXt-Tiny stage 3 block 2 (`stages[-1].blocks[-1]`, $7 \times 7$ feature activation map).
+- **Attribution Computation**:
+  $$\alpha_k = \frac{1}{Z} \sum_{i} \sum_{j} \frac{\partial z}{\partial A_{i,j}^k}, \quad L_{\text{Grad-CAM}} = \text{ReLU}\left(\sum_k \alpha_k A^k\right)$$
+- **Attribution Concentration Metric**: Defined as $\frac{\sum L_{>0.5}}{\sum L}$, capturing whether spatial cues are localized or diffuse.
+- **Resolution Preservation & Visual Display**: The model processes native 32x32 images. Heatmaps are generated directly from the model's native spatial representations and visually upsampled with bicubic interpolation strictly for human visualization. Upsampling does *not* increase forensic resolution.
+- **Faithful Language**: Heatmaps indicate *"image regions that most strongly influenced the classifier's decision"*; they do *not* serve as definitive legal proof of synthetic synthesis.
+
+### 6.5 Frequency Spectral Evidence (2D FFT)
+
+In tandem with spatial attribution, SignalScope renders a 2D Log-Magnitude Fast Fourier Transform ($\log(1 + |F(u, v)|)$) accompanied by an azimuthal radial energy decay curve.
+- **High-Frequency Energy Ratio**: Proportion of spectral energy located in the outer spatial frequency band ($r > r_{\text{mid}}$).
+- **Physical Meaning**: Natural images typically obey $1/f^\alpha$ power-law spectral decay, whereas upsampling and convolutional transposed layers in GANs/Diffusion models frequently introduce high-frequency periodic lattice residuals.
+
+### 6.6 Responsible Uncertainty & Grounded Explanation Engine
+
+To adhere to SIH explainability and ethical standards, predictions are synthesized deterministically through an engineering decision layer:
+
+```
+                          +-------------------------------+
+                          |    Calibrated Probability     |
+                          +---------------+---------------+
+                                          |
+                     +--------------------+--------------------+
+                     |                                         |
+                     v                                         v
+        [0.40 <= p <= 0.60] ?                       [Stability S < 0.60] ?
+                     |                                         |
+            YES      v                                YES      v
+        +---------------------------+             +---------------------------+
+        |  Verdict: UNCERTAIN       |             |  Verdict: UNCERTAIN       |
+        |  Confidence: LOW          |             |  Confidence: LOW          |
+        |  (Boundary Corridor)      |             |  (Perturbation Volatile)  |
+        +---------------------------+             +---------------------------+
+                     |                                         |
+                     +--------------------+--------------------+
+                                          | NO
+                                          v
+                            +---------------------------+
+                            |  p >= 0.50 ?              |
+                            |  YES -> Likely AI         |
+                            |  NO  -> Likely Real       |
+                            |  Confidence: HIGH/MEDIUM  |
+                            +---------------------------+
+```
+
+### 6.7 Representative Case Studies (Local Validation Set)
+
+Detailed multimodal evidence panels for three representative validation samples are archived in `report/explainability/`:
+
+| Case Study | True Label | Calibrated Prob | Stability Score | Verdict | Explanation Summary |
+|---|---|---|---|---|---|
+| **Case A: Authentic Real** (`0955 (6).jpg`) | REAL | **0.0000** | **1.0000** (High) | `likely_real` (High Confidence) | Diffuse spatial attribution, natural $1/f$ spectral decay, invariant to compression ($S=1.0$). |
+| **Case B: Synthetic Fake** (`3244 (9).jpg`) | FAKE | **1.0000** | **0.9999** (High) | `likely_ai_generated` (High Confidence) | Localized spatial cues on generative textures, elevated high frequencies ($0.5898$), invariant under degradation ($S=1.0$). |
+| **Case C: Borderline / Volatile** (`5457 (8).jpg`) | FAKE | **1.0000** (Pristine) | **0.2833** (Low) | `uncertain` (Low Confidence) | Pristine model prediction collapsed from $1.00$ to $0.00$ under resizing/blur. Triggered responsible uncertainty rule, preventing overconfident false declaration. |
 
 ---
 
@@ -228,3 +330,5 @@ $$S = C \times \left(1 - \frac{\bar{D} + D_{\max}}{2}\right)$$
 1. **Extreme Compression**: Aggressive multi-pass social media recompression (e.g. WhatsApp / Discord low-bitrate compression) dampens high-frequency generative artifacts.
 2. **Hybrid / Edited Media**: Images combining authentic camera backgrounds with synthetic in-painting require patch-level localization.
 3. **Novel Architectures**: Unseen generative paradigms (e.g., discrete diffusion or novel autoregressive tokenizers) may require ongoing domain-adaptation fine-tuning.
+4. **Resolution Scaling**: Downsampling to sub-32x32 dimensions destroys high-frequency cues, requiring graceful fallback to `uncertain` rather than overconfident classification.
+
