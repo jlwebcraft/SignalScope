@@ -133,7 +133,7 @@ class TemperatureScaler(nn.Module):
 
     def forward(self, logits: torch.Tensor) -> torch.Tensor:
         """Scales logits by temperature."""
-        t = torch.exp(self.log_temperature)
+        t = torch.exp(self.log_temperature).to(device=logits.device, dtype=logits.dtype)
         return logits / t
 
     def calibrate(self, logits: torch.Tensor) -> torch.Tensor:
