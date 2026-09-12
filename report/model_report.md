@@ -326,9 +326,99 @@ Detailed multimodal evidence panels for three representative validation samples 
 
 ---
 
-## 7. Known Limitations & Failure Cases
+---
+
+## 7. Production Inference Pipeline & Web Application (Phase 6)
+
+### 7.1 Selected Production Model & Inference Architecture
+
+In strict adherence to experimental findings from Phases 2C, 3, 4, and 5:
+- **Primary Classification Model**: ConvNeXt-Tiny spatial baseline (`convnext_tiny.in12k_ft_in1k`), loaded from frozen weights at `checkpoints/baseline_convnext/best_model.pt`.
+- **Validation Metrics Baseline**: ROC-AUC = **0.9992**, Macro-F1 = **0.9908**, Accuracy = **99.08%**, FPR = **1.03%** on 15,000 local validation images.
+- **Calibration Layer**: Post-hoc Temperature Scaling ($T = 0.9995$) loaded from `checkpoints/baseline_convnext/temperature_scaler.json`. Ensures output probabilities are well-calibrated $(\text{ECE} = 0.62\%)$ without degrading monotonic ROC ranking.
+- **Secondary Evidence Branches**: 2D FFT spectral analysis, 4-probe controlled degradation stability testing, and file chunk EXIF/C2PA metadata extraction.
+
+### 7.2 Production API Response Contract (Schema v1.0)
+
+The production FastAPI backend (`/api/v1/predict`) implements a versioned response contract:
+
+```json
+{
+  "schema_version": "1.0",
+  "verdict": "likely_ai_generated",
+  "probability": 1.0000,
+  "raw_probability": 1.0000,
+  "calibrated_probability": 1.0000,
+  "confidence_level": "high",
+  "uncertain": false,
+  "evidence": {
+    "spatial": {
+      "available": true,
+      "heatmap": "data:image/png;base64,...",
+      "attribution_concentration": 0.7434,
+      "target_layer": "ConvNeXtStage[3].ConvNeXtBlock[2]"
+    },
+    "spectral": {
+      "available": true,
+      "spectrum": "data:image/png;base64,...",
+      "high_frequency_energy_ratio": 0.3085,
+      "representation": "2D Log-Magnitude Fast Fourier Transform"
+    },
+    "robustness": {
+      "available": true,
+      "stability_score": 1.0000,
+      "prediction_flip_rate": 0.0,
+      "mean_probability_drift": 0.0000,
+      "is_stable": true,
+      "degradation_impact": "minimal",
+      "transform_results": [ ... ]
+    },
+    "metadata": {
+      "available": true,
+      "has_exif": false,
+      "c2pa_present": false,
+      "camera_make": null,
+      "camera_model": null,
+      "software": null,
+      "anomalies": []
+    }
+  },
+  "explanation": "Likely AI-generated (calibrated probability: 1.00, high confidence)...",
+  "disclaimer": "SignalScope outputs are statistical estimates of authenticity signals. They do not constitute legal proof or personal accusations..."
+}
+```
+
+### 7.3 Measured Latency & Performance Breakdown
+
+Benchmarked empirically on NVIDIA GeForce RTX 3050 6GB Laptop GPU with native 32×32 input images:
+
+| Component | Sub-Task | Measured Latency |
+|---|---|---|
+| **Engine Initialization** | PyTorch state reconstruction & scaler load | 467.1 ms (one-time) |
+| **Primary Inference** | Preprocessing (224×224) + ConvNeXt forward pass | **16.07 ms** |
+| **Calibration** | Logit scaling by $T = 0.9995$ + sigmoid | **< 0.05 ms** |
+| **Spatial Explainability** | Forward/backward hooks + Grad-CAM generation | **37.69 ms** |
+| **Spectral Analysis** | 2D FFT + log-magnitude + azimuthal integration | **2.86 ms** |
+| **Robustness Probing** | 4 degradation probes (JPEG 95, 70, Resize, Crop) | **65.14 ms** |
+| **Total Pipeline** | Single-image end-to-end inference + XAI | **~121.8 ms** |
+| **HTTP API Total** | Full multipart request + base64 encoding + response | **139.5 ms** |
+
+### 7.4 Web Application Architecture
+
+Built with Next.js (App Router), TypeScript, and Tailwind CSS:
+1. **Dropzone Ingestion**: Supports drag-and-drop with client-side MIME (`image/jpeg`, `png`, `webp`, `bmp`) and 25MB boundary validation.
+2. **One-Click Validation Samples**: Instant testing of Authentic Real, Synthetic AI, and Borderline/Uncertain cases.
+3. **Interactive Saliency Viewer**: Smooth blend slider comparing original image with the Grad-CAM heatmap overlay.
+4. **Spectral Dashboard**: 2D FFT spectrum viewer with high-frequency energy ratio gauge.
+5. **Robustness Transform Table**: Probe-by-probe status (✓ / ⚠) showing degradation impact.
+6. **Responsible AI Guardrails**: Prominent uncertainty advisories (*"Human forensic review recommended"*) and ethical disclaimers.
+
+---
+
+## 8. Known Limitations & Failure Cases
 1. **Extreme Compression**: Aggressive multi-pass social media recompression (e.g. WhatsApp / Discord low-bitrate compression) dampens high-frequency generative artifacts.
 2. **Hybrid / Edited Media**: Images combining authentic camera backgrounds with synthetic in-painting require patch-level localization.
 3. **Novel Architectures**: Unseen generative paradigms (e.g., discrete diffusion or novel autoregressive tokenizers) may require ongoing domain-adaptation fine-tuning.
 4. **Resolution Scaling**: Downsampling to sub-32x32 dimensions destroys high-frequency cues, requiring graceful fallback to `uncertain` rather than overconfident classification.
+
 

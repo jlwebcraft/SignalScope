@@ -173,44 +173,127 @@ conda env create -f environment.yml
 conda activate signalscope
 ```
 
-### Option C: Docker Deployment
+### Option C: Full Stack Docker Deployment
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
-The API will be available at `http://localhost:8000`.
+- **Backend API**: `http://localhost:8000` (interactive OpenAPI docs at `http://localhost:8000/docs`)
+- **Frontend Web UI**: `http://localhost:3000`
 
 ---
 
-## 6. Verification & Running the System
+## 6. Running the System & Local Development
 
-### Run Pre-Flight Diagnostics
-```bash
-python scripts/run_checks.py
-```
-
-### Run Unit Tests
-```bash
-pytest -v
-```
-
-### Launch the REST API
+### 1. Launch Backend API (FastAPI)
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
-Interactive Swagger documentation is available at `http://localhost:8000/docs`.
 
-### Run CLI Prediction
+### 2. Launch Frontend Web Application (Next.js + TypeScript + Tailwind CSS)
 ```bash
-# Using trained baseline checkpoint:
+cd frontend
+npm install
+npm run dev
+```
+Open `http://localhost:3000` to access the interactive web application.
+
+### 3. Build Frontend for Production
+```bash
+cd frontend
+npm run build
+npm run start
+```
+
+### 4. Run CLI Prediction Runner
+```bash
+# Standalone execution using trained baseline checkpoint:
 python model/predict.py --image path/to/image.jpg --checkpoint checkpoints/baseline_convnext/best_model.pt
 
-# Output as structured JSON:
+# Output as structured JSON (schema v1.0):
 python model/predict.py --image path/to/image.jpg --checkpoint checkpoints/baseline_convnext/best_model.pt --json
+```
+
+### 5. Run Verification & Diagnostics
+```bash
+# Pre-flight environment and hardware check:
+python scripts/run_checks.py
+
+# Complete Pytest integration test suite (61 tests):
+pytest -v
+
+# Automated End-to-End production verification benchmark:
+python scripts/verify_production_e2e.py
 ```
 
 ---
 
-## 7. Official Dataset Layout & Anti-Leakage Protocol
+## 7. Production API Endpoints & Response Contract
+
+### Core Endpoints
+- `GET /health`: Service health, uptime, and GPU device status.
+- `GET /info`: Model architecture (`ConvNeXtTinyDetector`), checkpoint version, calibration temperature ($T=0.9995$), and supported transformations.
+- `POST /predict`: Production inference endpoint accepting multipart image upload (`image/jpeg`, `image/png`, `image/webp`, `image/bmp`, max 25MB).
+
+### Response Schema Contract (`schema_version: "1.0"`)
+```json
+{
+  "schema_version": "1.0",
+  "verdict": "likely_ai_generated",
+  "probability": 1.0,
+  "confidence_level": "medium",
+  "uncertain": false,
+  "evidence": {
+    "spatial": {
+      "available": true,
+      "heatmap": "data:image/png;base64,...",
+      "attribution_concentration": 0.324
+    },
+    "spectral": {
+      "available": true,
+      "spectrum": "data:image/png;base64,...",
+      "high_frequency_energy_ratio": 0.281
+    },
+    "robustness": {
+      "available": true,
+      "stability_score": 1.0,
+      "prediction_flip_rate": 0.0,
+      "mean_probability_drift": 0.0
+    },
+    "metadata": {
+      "available": true,
+      "has_exif": false,
+      "c2pa_present": false
+    }
+  },
+  "explanation": "Predicted as likely AI-generated with 100.0% probability. Grad-CAM spatial attribution observed localized activation patterns. Spectral analysis observed elevated high-frequency energy. Prediction stability was high under the transformations evaluated for this sample.",
+  "disclaimer": "This assessment is a probabilistic estimation of visual signal artifacts and does not constitute definitive proof of synthetic origin."
+}
+```
+
+### Responsible Language & Uncertainty Framework
+SignalScope enforces strict linguistic integrity:
+- Results are reported probabilistically as `Likely AI-generated`, `Likely real`, or `Uncertain` (with `"Human review recommended."`).
+- Raw sigmoid outputs are never termed "calibrated" without the empirical post-hoc temperature scaling layer.
+- High-frequency energy is reported as an *observed spectral statistic*, not "universal proof of AI generation".
+- Transformation stability is reported as *sample-specific stability under tested transformations*, never generalized to all image alterations.
+
+---
+
+## 8. Latency & Performance Breakdown
+
+Benchmarked on consumer hardware (NVIDIA GeForce RTX 3050 Laptop GPU, native 32×32 input):
+- **Model Loading & Cold Start**: ~467 ms
+- **Primary ConvNeXt Forward Pass**: **16.1 ms**
+- **Temperature Scaling ($T=0.9995$)**: **< 0.05 ms**
+- **Grad-CAM Saliency Extraction**: **37.7 ms**
+- **2D FFT Spectral Feature Generation**: **2.9 ms**
+- **Authenticity Stability Probing (4 transformations)**: **65.1 ms**
+- **Total Single-Image Inference Pipeline**: **~121.8 ms**
+- **Full HTTP Request-Response Latency**: **~139.5 ms**
+
+---
+
+## 9. Official Dataset Layout & Anti-Leakage Protocol
 
 SignalScope consumes the official dataset through a decoupled, configurable data root:
 - **Default Location**: `C:\Programming\SignalScope-data` (or configurable via `SIGNALSCOPE_DATA_ROOT` environment variable / `model/configs/default.yaml`).
@@ -225,14 +308,13 @@ SignalScope consumes the official dataset through a decoupled, configurable data
 ```
 
 ### Training & Validation Methodology
-1. **Zero-Leakage Policy**: The `test/` partition is designated for evaluation. In strict adherence to SIH 2026 guidelines, **`test/` is completely excluded from model training, validation, threshold tuning, and feature selection**.
+1. **Zero-Leakage Policy**: In strict adherence to SIH 2026 guidelines, **`test/` is completely excluded from model training, validation, threshold tuning, and feature selection**.
 2. **Local Stratified Splits**: A reproducible validation split (85,000 train / 15,000 validation) is constructed exclusively from `train/` using deterministic stratified sampling (`seed=42`).
-3. **Generator Metadata Status**: The supplied training data provides binary REAL/FAKE labels but no per-generator metadata. Validation split is class-stratified and deterministic; generator-aware splitting is unavailable on training data because the supplied set contains no generator metadata.
-4. **Disjoint Verification**: The split pipeline asserts zero path overlap (`assert len(train_paths ∩ val_paths) == 0`).
+3. **Disjoint Verification**: Path overlap is asserted to be zero (`assert len(train_paths ∩ val_paths) == 0`).
 
 ---
 
-## 8. Empirical Baseline Model Results (Phase 2C)
+## 10. Empirical Baseline Model Results (Phase 2C)
 
 Trained strictly on the local training partition (85,000 train / 15,000 val) without touching `test/`:
 - **Backbone**: `convnext_tiny.in12k_ft_in1k` (pure spatial transfer learning)
@@ -246,7 +328,15 @@ Trained strictly on the local training partition (85,000 train / 15,000 val) wit
 
 ---
 
-## 9. Development Roadmap & Phased Execution
+## 11. Known Limitations
+
+1. **Resolution Scale**: Model is trained on 32×32 patches; upsampled Grad-CAM heatmaps represent visual localization regions rather than high-frequency microscopic forensic artifacts.
+2. **Degradation Sensitivity**: Aggressive resizing and downsampling can induce prediction drift on borderline samples, captured by the Authenticity Stability score.
+3. **Absence of Provenance**: Lack of C2PA manifest does not imply synthetic origin; metadata is supporting evidence only.
+
+---
+
+## 12. Development Roadmap & Phased Execution
 
 - [x] **Phase 1 — Foundation**: Repository structure, configuration, logging, testing suite, Docker, schemas, baseline CLI.
 - [x] **Phase 2A — Reproducible ML Stack**: Python 3.13 isolated Conda environment (`signalscope`), PyTorch 2.6.0+cu124, timm, RTX 3050 GPU verification.
@@ -255,12 +345,11 @@ Trained strictly on the local training partition (85,000 train / 15,000 val) wit
 - [x] **Phase 3 — Frequency Features + Generalization**: 2D FFT & 2D DCT spectral branches, Dual-Branch Fusion Detector (ConvNeXt-Tiny + FFT 32x32: ROC-AUC: 0.9992, Macro-F1: 0.9875, FPR: 0.93%), complementarity analysis.
 - [x] **Phase 4 — Robustness & Authenticity Stability**: Controlled degradation benchmark across 7 conditions (JPEG 95, 85, 70, Resize, Screenshot, Light Edit). Bounded Authenticity Stability Score $S \in [0, 1]$ ($S = C \times (1 - 0.5(\bar{D} + D_{\max}))$, Fusion mean $S = 0.6885$, Baseline mean $S = 0.6820$).
 - [x] **Phase 5 — Calibration + Faithful Explainability**: Post-hoc probability calibration (Temperature Scaling $T=0.9995$, ECE $0.0062$, Brier $0.00795$ on 15k validation set), Grad-CAM spatial attribution on ConvNeXt-Tiny stage 3 block 2, 2D FFT spectral visualizer with azimuthal decay profiles, structured multimodal evidence representation, responsible uncertainty framework (borderline $[0.40, 0.60]$ corridor, volatility threshold $S < 0.60$), and deterministic evidence-grounded explanation synthesis.
-- [ ] **Phase 6 — Production Inference + Web Application**: FastAPI production serving, interactive user interface, and real-time visualization.
-- [ ] **Phase 7 — Bonus Modules**: C2PA Content Credentials provenance, generator attribution.
-- [ ] **Phase 8 — Final Verification**: End-to-end judge reproducibility audit (< 10 minutes).
+- [x] **Phase 6 — Production Inference + Web Application**: FastAPI production serving, Next.js 16 + TypeScript + Tailwind CSS web interface, interactive Grad-CAM heatmap blending, 2D FFT spectrum viewer, transformation robustness benchmark matrix, EXIF metadata inspector, full docker compose stack, and sub-150ms end-to-end latency.
+- [ ] **Phase 7 — Deployment + Public Demo**: Production deployment, public demonstration endpoints, and final hackathon presentation assets.
 
 > [!NOTE]
-> **Validation Notice**: All reported calibration, explainability, and stability metrics are local validation results evaluated on partitions constructed from `train/`. They are not the organizer's unseen-generator test results. The official held-out test partition `test/` remains strictly untouched.
+> **Validation Notice**: All reported calibration, explainability, stability, and inference metrics are local validation results evaluated on partitions constructed from `train/`. They are not the organizer's unseen-generator test results. The official held-out test partition `test/` remains strictly untouched.
 
 
 ---
