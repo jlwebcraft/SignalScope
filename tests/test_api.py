@@ -134,3 +134,35 @@ def test_predict_endpoint_schema_contract_completeness(sample_image_bytes: bytes
     assert "explanation" in data
     assert "disclaimer" in data
 
+
+def test_predict_endpoint_missing_filename(sample_image_bytes: bytes):
+    response = client.post(
+        "/api/v1/predict",
+        files={"file": ("", sample_image_bytes, "image/jpeg")},
+    )
+    assert response.status_code in {400, 422}
+
+
+
+def test_predict_endpoint_too_small_dimensions():
+    # 8x8 image is smaller than minimum 16x16
+    from PIL import Image
+    tiny = Image.new("RGB", (8, 8), color="red")
+    buf = io.BytesIO()
+    tiny.save(buf, format="PNG")
+    response = client.post(
+        "/api/v1/predict",
+        files={"file": ("tiny.png", buf.getvalue(), "image/png")},
+    )
+    assert response.status_code == 422
+    assert "smaller than minimum allowed" in response.json()["detail"]
+
+
+def test_ready_probe_failure_mode(monkeypatch):
+    from app.api.v1 import endpoints
+    monkeypatch.setattr(endpoints.inference_engine, "has_trained_weights", False)
+    response = client.get("/api/v1/ready")
+    assert response.status_code == 503
+    assert "not fully initialized" in response.json()["detail"]
+
+
