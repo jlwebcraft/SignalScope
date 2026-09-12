@@ -1,13 +1,27 @@
 # SignalScope
-### *"Telling Real From Synthetic in the Age of Generative Media"*
+### *"Detecting Real vs Synthetic Media with Responsible Uncertainty"*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.2+-ee4c2c.svg)](https://pytorch.org/)
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/)
+[![PyTorch 2.6](https://img.shields.io/badge/PyTorch-2.6-ee4c2c.svg)](https://pytorch.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg)](https://fastapi.tiangolo.com/)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16.3-black.svg)](https://nextjs.org/)
 [![SIH 2026](https://img.shields.io/badge/Event-SIH%202026%20Internal%20Hackathon-purple.svg)]()
 
+> [!IMPORTANT]
+> **Official Evaluation Scope & Anti-Leakage Notice**: All reported development and validation metrics in this repository are evaluated strictly on a 15,000-image validation split constructed from `train/`. In strict adherence to SIH 2026 competition rules, the organizer's held-out test partition (`C:\Programming\SignalScope-data\test`) was **kept strictly untouched**. No competition test claims are made.
+
 ---
+
+## Quick Navigation for Judges & Evaluators
+- **Final Submission Report**: [`report/final_submission_report.md`](report/final_submission_report.md)
+- **SIH Judging Scorecard**: [`docs/final_scorecard.md`](docs/final_scorecard.md)
+- **3–5 Minute Demo Script**: [`docs/demo_script.md`](docs/demo_script.md)
+- **Deterministic Demo Samples**: [`docs/demo_samples.md`](docs/demo_samples.md)
+- **Deployment Architecture & Host Feasibility**: [`docs/deployment_architecture.md`](docs/deployment_architecture.md)
+
+---
+
 
 ## 1. Project Overview & Official Problem Requirements
 
@@ -374,7 +388,7 @@ Trained strictly on the local training partition (85,000 train / 15,000 val) wit
 - [x] **Phase 5 — Calibration + Faithful Explainability**: Post-hoc probability calibration (Temperature Scaling $T=0.9995$, ECE $0.0062$, Brier $0.00795$ on 15k validation set), Grad-CAM spatial attribution on ConvNeXt-Tiny stage 3 block 2, 2D FFT spectral visualizer with azimuthal decay profiles, structured multimodal evidence representation, responsible uncertainty framework (borderline $[0.40, 0.60]$ corridor, volatility threshold $S < 0.60$), and deterministic evidence-grounded explanation synthesis.
 - [x] **Phase 6 — Production Inference + Web Application**: FastAPI production serving, Next.js 16 + TypeScript + Tailwind CSS web interface, interactive Grad-CAM heatmap blending, 2D FFT spectrum viewer, transformation robustness benchmark matrix, EXIF metadata inspector, full docker compose stack, and sub-150ms end-to-end latency.
 - [x] **Phase 7 — Deployment + Public Demo**: Reproducible Python 3.13-slim production Docker container, non-root execution, readiness probe (`/ready`), model artifact resolution with SHA-256 verification and local caching, CPU inference verification (61ms forward pass), cloud host feasibility research (Hugging Face Spaces / Render Starter / Vercel), and 3-5 minute demo recording script.
-- [ ] **Phase 8 — Final Hardening, Demo, Metrics, and Submission**: End-to-end judge reproducibility audit (< 10 minutes), final evaluation metrics packaging, and hackathon submission.
+- [x] **Phase 8 — Final Hardening, Demo, Metrics, and Submission**: Comprehensive repository audit, failure-path API test hardening, dynamic frontend error UX, deterministic judge demo catalog (`docs/demo_samples.md`), project scorecard (`docs/final_scorecard.md`), and final submission report (`report/final_submission_report.md`).
 
 > [!NOTE]
 > **Validation Notice**: All reported calibration, explainability, stability, and inference metrics are local validation results evaluated on partitions constructed from `train/`. They are not the organizer's unseen-generator test results. The official held-out test partition `test/` remains strictly untouched.
@@ -382,8 +396,9 @@ Trained strictly on the local training partition (85,000 train / 15,000 val) wit
 
 ---
 
-## 8. Originality & Third-Party Declarations
+## 14. Originality & Third-Party Declarations
 
 - **Codebase Originality**: All architecture wrappers, evidence fusion logic, stability testing services, and API endpoints are original implementations built for the SIH 2026 hackathon.
 - **Third-Party Libraries**: `PyTorch`, `torchvision`, `timm` (Ross Wightman), `scikit-learn`, `FastAPI`, `Pillow`, `NumPy`, `SciPy`.
 - **Metrics Integrity**: All reported metrics will be derived solely from empirical evaluations conducted on verified datasets without synthetic manipulation or placeholder fabrication.
+
