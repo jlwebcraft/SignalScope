@@ -1,0 +1,171 @@
+{
+  "dataset_root": "C:\\Programming\\SignalScope-data",
+  "top_level_dirs": [
+    "test",
+    "train"
+  ],
+  "top_level_files": [],
+  "train": {
+    "exists": true,
+    "path": "C:\\Programming\\SignalScope-data\\train",
+    "subdirectories": [
+      "FAKE",
+      "REAL"
+    ],
+    "root_files": [],
+    "total_images": 100000,
+    "classes": {
+      "FAKE": {
+        "count": 50000,
+        "extensions": {
+          ".jpg": 50000
+        },
+        "sample_filenames": [
+          "1000 (10).jpg",
+          "1000 (2).jpg",
+          "1000 (3).jpg",
+          "1000 (4).jpg",
+          "1000 (5).jpg"
+        ],
+        "sample_audit": {
+          "sampled_count": 500,
+          "formats": {
+            "JPEG": 500
+          },
+          "modes": {
+            "RGB": 500
+          },
+          "min_dimension": "32x32",
+          "max_dimension": "32x32",
+          "common_dimensions": [
+            {
+              "dimension": "32x32",
+              "count": 500
+            }
+          ],
+          "corrupt_count": 0,
+          "corrupt_examples": []
+        }
+      },
+      "REAL": {
+        "count": 50000,
+        "extensions": {
+          ".jpg": 50000
+        },
+        "sample_filenames": [
+          "0000 (10).jpg",
+          "0000 (2).jpg",
+          "0000 (3).jpg",
+          "0000 (4).jpg",
+          "0000 (5).jpg"
+        ],
+        "sample_audit": {
+          "sampled_count": 500,
+          "formats": {
+            "JPEG": 500
+          },
+          "modes": {
+            "RGB": 500
+          },
+          "min_dimension": "32x32",
+          "max_dimension": "32x32",
+          "common_dimensions": [
+            {
+              "dimension": "32x32",
+              "count": 500
+            }
+          ],
+          "corrupt_count": 0,
+          "corrupt_examples": []
+        }
+      }
+    },
+    "duplicate_filename_count": 40000,
+    "duplicate_examples": [
+      "1000 (10).jpg",
+      "1000 (2).jpg",
+      "1000 (3).jpg",
+      "1000 (4).jpg",
+      "1000 (5).jpg"
+    ]
+  },
+  "test": {
+    "exists": true,
+    "path": "C:\\Programming\\SignalScope-data\\test",
+    "subdirectories": [
+      "FAKE",
+      "REAL"
+    ],
+    "root_files": [],
+    "total_images": 20000,
+    "classes": {
+      "FAKE": {
+        "count": 10000,
+        "extensions": {
+          ".jpg": 10000
+        },
+        "sample_filenames": [
+          "0 (10).jpg",
+          "0 (2).jpg",
+          "0 (3).jpg",
+          "0 (4).jpg",
+          "0 (5).jpg"
+        ],
+        "sample_audit": {
+          "sampled_count": 500,
+          "formats": {
+            "JPEG": 500
+          },
+          "modes": {
+            "RGB": 500
+          },
+          "min_dimension": "32x32",
+          "max_dimension": "32x32",
+          "common_dimensions": [
+            {
+              "dimension": "32x32",
+              "count": 500
+            }
+          ],
+          "corrupt_count": 0,
+          "corrupt_examples": []
+        }
+      },
+      "REAL": {
+        "count": 10000,
+        "extensions": {
+          ".jpg": 10000
+        },
+        "sample_filenames": [
+          "0000 (10).jpg",
+          "0000 (2).jpg",
+          "0000 (3).jpg",
+          "0000 (4).jpg",
+          "0000 (5).jpg"
+        ],
+        "sample_audit": {
+          "sampled_count": 500,
+          "formats": {
+            "JPEG": 500
+          },
+          "modes": {
+            "RGB": 500
+          },
+          "min_dimension": "32x32",
+          "max_dimension": "32x32",
+          "common_dimensions": [
+            {
+              "dimension": "32x32",
+              "count": 500
+            }
+          ],
+          "corrupt_count": 0,
+          "corrupt_examples": []
+        }
+      }
+    },
+    "duplicate_filename_count": 0,
+    "duplicate_examples": []
+  },
+  "generator_metadata_detected": null
+}

@@ -1,0 +1,78 @@
+{
+  "calibration_method": "temperature_scaling",
+  "timestamp": "2026-09-12T19:09:18.416169+00:00",
+  "model_checkpoint": "C:\\Programming\\SignalScope\\checkpoints\\baseline_convnext\\best_model.pt",
+  "dataset": {
+    "source_directory": "C:\\Programming\\SignalScope-data\\train",
+    "calibration_samples": 5000,
+    "validation_samples": 15000,
+    "random_seed": 42,
+    "held_out_test_status": "STRICTLY_UNTOUCHED"
+  },
+  "fitted_temperature": 0.99953,
+  "metrics_pre_calibration": {
+    "brier_score": 0.00795,
+    "ece": 0.0062,
+    "mce": 0.2687,
+    "roc_auc": 0.9995,
+    "macro_f1": 0.9908,
+    "accuracy": 0.9908,
+    "precision": 0.9898,
+    "recall": 0.9919,
+    "fpr": 0.0103,
+    "mean_confidence": 0.9965
+  },
+  "metrics_post_calibration": {
+    "brier_score": 0.00795,
+    "ece": 0.0062,
+    "mce": 0.2688,
+    "roc_auc": 0.9995,
+    "macro_f1": 0.9908,
+    "accuracy": 0.9908,
+    "precision": 0.9898,
+    "recall": 0.9919,
+    "fpr": 0.0103,
+    "mean_confidence": 0.9965
+  },
+  "optimal_threshold_analysis": {
+    "youden_optimal_threshold": 0.4214,
+    "youden_max_j": 0.9819,
+    "metrics_at_optimal_threshold": {
+      "operating_threshold": 0.42139628529548645,
+      "roc_auc": 0.9995,
+      "macro_f1": 0.9909,
+      "accuracy": 0.9909,
+      "precision": 0.9895,
+      "recall": 0.9924,
+      "fpr": 0.0105,
+      "specificity": 0.9895,
+      "confusion_matrix": {
+        "tn": 7421,
+        "fp": 79,
+        "fn": 57,
+        "tp": 7443,
+        "matrix": [
+          [
+            7421,
+            79
+          ],
+          [
+            57,
+            7443
+          ]
+        ]
+      },
+      "sample_count": {
+        "total": 15000,
+        "real": 7500,
+        "synthetic": 7500
+      }
+    }
+  },
+  "figures": {
+    "reliability_diagram": "C:\\Programming\\SignalScope\\report\\calibration\\reliability_diagram.png",
+    "confidence_histogram": "C:\\Programming\\SignalScope\\report\\calibration\\confidence_histogram.png",
+    "calibration_curve": "C:\\Programming\\SignalScope\\report\\calibration\\calibration_curve.png"
+  },
+  "methodological_notes": "Calibration was fitted on a separate 5,000-sample subset of the official training partition and evaluated on the untouched 15,000-sample local validation set. The organizer-held-out test partition was not used."
+}

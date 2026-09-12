@@ -1,0 +1,128 @@
+{
+  "benchmark_name": "explainability_and_evidence_evaluation",
+  "timestamp": "2026-09-12T19:12:07.512833+00:00",
+  "cases": [
+    {
+      "case_id": "case_1_authentic_real",
+      "source_image": "C:\\Programming\\SignalScope-data\\train\\REAL\\0955 (6).jpg",
+      "ground_truth": "Authentic Real (0)",
+      "evidence_object": {
+        "verdict": "likely_real",
+        "raw_probability": 0.0,
+        "calibrated_probability": 0.0,
+        "confidence_level": "high",
+        "uncertain": false,
+        "uncertainty_reasons": [],
+        "evidence": {
+          "spatial": {
+            "available": true,
+            "attribution_concentration": 0.6215,
+            "target_layer": "ConvNeXtStage[3].ConvNeXtBlock[2]"
+          },
+          "frequency": {
+            "available": true,
+            "high_frequency_energy_ratio": 0.3264,
+            "spectral_map_type": "2D FFT Log-Magnitude (Centered)"
+          },
+          "robustness": {
+            "stability_score": 1.0,
+            "degradation_impact": "minimal",
+            "probes_evaluated": 4
+          },
+          "metadata": {
+            "dimensions": [
+              32,
+              32
+            ],
+            "mode": "RGB"
+          },
+          "visual_panel_path": "C:\\Programming\\SignalScope\\report\\explainability\\sample_authentic_real_evidence_panel.png"
+        },
+        "explanation": "Likely real camera capture (calibrated probability of synthetic origin: 0.00, high confidence). Spatial feature attribution indicates broad natural gradient consistency without localized anomaly peaks (attribution concentration: 0.62). Spectral analysis observed smooth radial energy decay (high-frequency ratio: 0.33) consistent with authentic sensor distributions. The assessment remained highly consistent under controlled degradation tests (Authenticity Stability: 1.00). This is an evidence-grounded likelihood assessment, not absolute proof.",
+        "methodological_disclaimer": "Assessment is grounded in spatial attribution, 2D spectral distributions, and transformation stability. This is a probabilistic likelihood assessment based on statistical evidence, not causal proof."
+      }
+    },
+    {
+      "case_id": "case_2_synthetic_fake",
+      "source_image": "C:\\Programming\\SignalScope-data\\train\\FAKE\\3244 (9).jpg",
+      "ground_truth": "Synthetic AI (1)",
+      "evidence_object": {
+        "verdict": "likely_ai_generated",
+        "raw_probability": 1.0,
+        "calibrated_probability": 1.0,
+        "confidence_level": "high",
+        "uncertain": false,
+        "uncertainty_reasons": [],
+        "evidence": {
+          "spatial": {
+            "available": true,
+            "attribution_concentration": 0.7434,
+            "target_layer": "ConvNeXtStage[3].ConvNeXtBlock[2]"
+          },
+          "frequency": {
+            "available": true,
+            "high_frequency_energy_ratio": 0.3085,
+            "spectral_map_type": "2D FFT Log-Magnitude (Centered)"
+          },
+          "robustness": {
+            "stability_score": 1.0,
+            "degradation_impact": "minimal",
+            "probes_evaluated": 4
+          },
+          "metadata": {
+            "dimensions": [
+              32,
+              32
+            ],
+            "mode": "RGB"
+          },
+          "visual_panel_path": "C:\\Programming\\SignalScope\\report\\explainability\\sample_synthetic_fake_evidence_panel.png"
+        },
+        "explanation": "Likely AI-generated (calibrated probability: 1.00, high confidence). Spatial attribution shows the model focused predominantly on localized structural regions (attribution concentration: 0.74). Spectral analysis observed a high-frequency energy ratio of 0.31 in the native 2D FFT spectrum. The assessment remained highly consistent under controlled degradation tests (Authenticity Stability: 1.00). This is an evidence-grounded likelihood assessment, not absolute proof.",
+        "methodological_disclaimer": "Assessment is grounded in spatial attribution, 2D spectral distributions, and transformation stability. This is a probabilistic likelihood assessment based on statistical evidence, not causal proof."
+      }
+    },
+    {
+      "case_id": "case_3_borderline_uncertain",
+      "source_image": "C:\\Programming\\SignalScope-data\\train\\FAKE\\5457 (8).jpg",
+      "ground_truth": "Synthetic AI (1)",
+      "evidence_object": {
+        "verdict": "uncertain",
+        "raw_probability": 1.0,
+        "calibrated_probability": 1.0,
+        "confidence_level": "uncertain",
+        "uncertain": true,
+        "uncertainty_reasons": [
+          "Prediction volatility detected under spatial perturbation (Authenticity Stability: 0.283 < 0.60)."
+        ],
+        "evidence": {
+          "spatial": {
+            "available": true,
+            "attribution_concentration": 0.6807,
+            "target_layer": "ConvNeXtStage[3].ConvNeXtBlock[2]"
+          },
+          "frequency": {
+            "available": true,
+            "high_frequency_energy_ratio": 0.3263,
+            "spectral_map_type": "2D FFT Log-Magnitude (Centered)"
+          },
+          "robustness": {
+            "stability_score": 0.2833,
+            "degradation_impact": "severe",
+            "probes_evaluated": 4
+          },
+          "metadata": {
+            "dimensions": [
+              32,
+              32
+            ],
+            "mode": "RGB"
+          },
+          "visual_panel_path": "C:\\Programming\\SignalScope\\report\\explainability\\sample_borderline_uncertain_evidence_panel.png"
+        },
+        "explanation": "Classification is uncertain (calibrated probability: 1.00). Prediction volatility detected under spatial perturbation (Authenticity Stability: 0.283 < 0.60). Human forensic review is recommended before making an adjudication.",
+        "methodological_disclaimer": "Assessment is grounded in spatial attribution, 2D spectral distributions, and transformation stability. This is a probabilistic likelihood assessment based on statistical evidence, not causal proof."
+      }
+    }
+  ]
+}

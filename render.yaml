@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: signalscope-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter  # Requires >= 1.5GB RAM for PyTorch ConvNeXt model execution
+    region: oregon
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PORT
+        value: 8000
+      - key: DEVICE
+        value: cpu
+      - key: FRONTEND_ORIGIN
+        value: http://localhost:3000,https://signalscope.vercel.app
+      - key: MODEL_PATH
+        value: checkpoints/baseline_convnext/best_model.pt
+      - key: MODEL_URL
+        sync: false
+      - key: SCALER_PATH
+        value: checkpoints/baseline_convnext/temperature_scaler.json
+      - key: SCALER_URL
+        sync: false
+    healthCheckPath: /health

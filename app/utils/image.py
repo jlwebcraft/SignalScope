@@ -56,6 +56,10 @@ def load_image_safely(
         width, height = pil_img.size
         if width <= 0 or height <= 0:
             raise ImageValidationError(f"Invalid image dimensions: {width}x{height}")
+        if width < 16 or height < 16:
+            raise ImageValidationError(
+                f"Image dimensions ({width}x{height}) are smaller than minimum allowed (16x16px)"
+            )
         if width > max_dimension or height > max_dimension:
             raise ImageValidationError(
                 f"Image dimensions ({width}x{height}) exceed maximum allowed dimension ({max_dimension}px)"

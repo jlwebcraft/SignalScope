@@ -4,6 +4,8 @@ Integrates RGB spatial branch, frequency branch, metadata extraction,
 and authenticity stability testing into a unified evidence fusion verdict.
 """
 
+import base64
+import io
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import numpy as np
@@ -21,13 +23,23 @@ from app.services.stability import evaluate_authenticity_stability
 from app.utils.logger import logger
 
 
+def pil_to_base64_data_uri(img: Image.Image, format: str = "PNG") -> str:
+    """Encodes PIL Image as Base64 data URI string."""
+    buffered = io.BytesIO()
+    img.save(buffered, format=format)
+    img_str = base64.b64encode(buffered.getvalue()).decode("ascii")
+    return f"data:image/{format.lower()};base64,{img_str}"
+
+
 class SignalScopeInferenceEngine:
     """Orchestrates image authenticity inference and multimodal evidence fusion."""
+
 
     def __init__(
         self,
         config_path: Optional[str] = None,
         checkpoint_path: Optional[str] = None,
+        device: Optional[str] = None,
         operating_threshold: float = 0.50,
         uncertainty_band: float = 0.10,
     ) -> None:
@@ -36,26 +48,83 @@ class SignalScopeInferenceEngine:
         Args:
             config_path: Path to model configuration YAML.
             checkpoint_path: Path to trained PyTorch weights.
+            device: Computing device ('cpu', 'cuda', or None for auto).
             operating_threshold: Calibrated decision boundary for synthetic classification.
             uncertainty_band: Half-width around threshold where verdict is deemed 'uncertain'.
         """
+        import os
+        from app.inference.artifacts import ModelArtifactManager
+
         self.config_path = config_path
-        self.checkpoint_path = checkpoint_path
+        self.artifact_manager = ModelArtifactManager(checkpoint_path=checkpoint_path)
+        self.checkpoint_path = str(self.artifact_manager.checkpoint_path)
+
+        # Device determination: explicit param > DEVICE env var > auto CUDA detection
+        if device is not None:
+            self.device = device
+        elif os.environ.get("DEVICE"):
+            self.device = os.environ["DEVICE"]
+        else:
+            try:
+                import torch
+                self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            except ImportError:
+                self.device = "cpu"
+
         self.operating_threshold = operating_threshold
         self.uncertainty_band = uncertainty_band
         self.model = None
-        self.device = "cpu"
         self._is_ready = False
+        self.has_trained_weights = False
+        self.scaler = None
         self._initialize_engine()
 
     def _initialize_engine(self) -> None:
         """Initializes model components or falls back to baseline/test mode."""
-        if self.checkpoint_path and Path(self.checkpoint_path).exists():
-            logger.info(f"Loading checkpoint from {self.checkpoint_path}")
-            # Placeholder for PyTorch model loading once trained in Phase 3
-            self._is_ready = True
+        from model.calibration import TemperatureScaler
+        self.scaler = TemperatureScaler()
+        self.model_name = "unloaded"
+
+        resolved_ckpt = self.artifact_manager.resolve_checkpoint()
+        if resolved_ckpt and resolved_ckpt.exists():
+            try:
+                import torch
+                from model.architectures.convnext import build_convnext_tiny
+                from model.dataset import get_default_transforms
+
+                target_device = torch.device(self.device)
+                ckpt = torch.load(str(resolved_ckpt), map_location=target_device, weights_only=False)
+                state_dict = ckpt["state_dict"] if isinstance(ckpt, dict) and "state_dict" in ckpt else ckpt
+
+                model = build_convnext_tiny(pretrained=False).to(target_device)
+                model.load_state_dict(state_dict)
+                model.eval()
+                self.model = model
+                self.transform = get_default_transforms(image_size=224, is_training=False)
+                self.has_trained_weights = True
+                self.model_name = ckpt.get("model_name", "convnext_tiny.in12k_ft_in1k") if isinstance(ckpt, dict) else "convnext_tiny"
+
+                # Check for companion temperature scaler
+                resolved_scaler = self.artifact_manager.resolve_scaler()
+                if resolved_scaler and resolved_scaler.exists():
+                    try:
+                        self.scaler.load(resolved_scaler)
+                        logger.info(f"Loaded temperature scaler (T={self.scaler.temperature:.4f}) from {resolved_scaler}")
+                    except Exception as s_err:
+                        logger.warning(f"Could not load temperature scaler from {resolved_scaler}: {s_err}")
+
+                self._is_ready = True
+                logger.info(f"Loaded trained checkpoint from {resolved_ckpt} ({self.model_name}) onto {self.device}")
+            except Exception as exc:
+                logger.error(f"Failed to load checkpoint {resolved_ckpt}: {exc}")
+                self.has_trained_weights = False
+                self._is_ready = False
         else:
-            logger.info("Operating in foundation/scaffolding mode (no trained checkpoint loaded).")
+            logger.warning(
+                "DEVELOPMENT PLACEHOLDER MODE: No trained checkpoint loaded. "
+                "Predictions are heuristic scaffolding, not valid model outputs."
+            )
+            self.has_trained_weights = False
             self._is_ready = True
 
     @property
@@ -66,12 +135,16 @@ class SignalScopeInferenceEngine:
     def predict_raw_probability(self, image: Image.Image) -> float:
         """Computes synthetic probability for a given PIL Image.
 
-        In Phase 1 / test mode: computes a deterministic visual signal from image stats.
-        In Phase 3+: routes through PyTorch ConvNeXt and frequency branches.
+        When model is loaded: routes through PyTorch ConvNeXt-Tiny forward pass.
+        In test/scaffolding mode without weights: computes deterministic visual signal.
         """
-        if self.model is not None:
-            # When model is loaded, run torch forward pass
-            pass
+        if self.model is not None and self.has_trained_weights:
+            import torch
+            tensor = self.transform(image).unsqueeze(0).to(self.device)
+            with torch.no_grad():
+                logit = self.model(tensor)
+                prob = float(torch.sigmoid(logit).item())
+            return float(np.clip(prob, 0.0, 1.0))
 
         # Deterministic lightweight baseline heuristic for scaffolding and testing
         # Analyzes color distribution and edge variance
@@ -81,67 +154,108 @@ class SignalScopeInferenceEngine:
         norm_score = float(np.mean(std_per_channel) / 128.0)
         return float(np.clip(norm_score, 0.05, 0.95))
 
+    def predict_calibrated_probability(self, image: Image.Image) -> float:
+        """Computes temperature-calibrated synthetic probability."""
+        if self.model is not None and self.has_trained_weights:
+            import torch
+            tensor = self.transform(image).unsqueeze(0).to(self.device)
+            with torch.no_grad():
+                logit = self.model(tensor)
+                cal_prob = float(self.scaler.calibrate(logit).item())
+            return float(np.clip(cal_prob, 0.0, 1.0))
+        return self.predict_raw_probability(image)
+
+
     def analyze(self, image: Image.Image) -> PredictionResponse:
         """Runs the full SignalScope pipeline on an input image.
 
         Pipeline:
-        1. Base RGB/spatial synthetic probability
-        2. Metadata & provenance inspection
-        3. Frequency-domain cues
-        4. Authenticity stability test under degradation
-        5. Multimodal evidence fusion
-        6. Threshold calibration & uncertainty determination
-        7. Evidence-grounded explanation generation
+        1. Base RGB/spatial synthetic probability (raw and temperature-calibrated)
+        2. Saliency and spatial attribution (Grad-CAM)
+        3. Frequency-domain spectral cues (2D FFT)
+        4. Metadata & provenance inspection
+        5. Authenticity stability test under degradation
+        6. Multimodal evidence fusion
+        7. Threshold calibration & responsible uncertainty determination
+        8. Evidence-grounded explanation generation
         """
-        # Step 1: Base prediction
-        base_prob = self.predict_raw_probability(image)
+        # Step 1: Base predictions (raw and calibrated)
+        raw_prob = self.predict_raw_probability(image)
+        cal_prob = self.predict_calibrated_probability(image)
 
-        # Step 2: Extract metadata and check for synthetic markers
+        # Step 2: Spatial Attribution (Grad-CAM)
+        heatmap_available = False
+        heatmap_b64 = None
+        concentration = 0.50
+        if self.model is not None and self.has_trained_weights:
+            from model.explainability.gradcam import compute_spatial_attribution
+            try:
+                _, overlay_pil, concentration = compute_spatial_attribution(self.model, image, self.device)
+                heatmap_available = True
+                heatmap_b64 = pil_to_base64_data_uri(overlay_pil)
+            except Exception as exc:
+                logger.warning(f"Grad-CAM attribution computation skipped: {exc}")
+                heatmap_available = False
+
+        # Step 3: Frequency Spectral Evidence (2D FFT)
+        hf_ratio = 0.50
+        spectrum_b64 = None
+        try:
+            from model.explainability.spectral import extract_spectral_features
+            _, _, hf_ratio, spectrum_pil = extract_spectral_features(image)
+            spectrum_b64 = pil_to_base64_data_uri(spectrum_pil)
+        except Exception as exc:
+            logger.warning(f"Frequency spectral extraction skipped: {exc}")
+
+        # Step 4: Metadata & provenance inspection
         meta_info = extract_metadata(image)
 
-        # Step 3: Stability evaluation under controlled degradation
+        # Step 5: Authenticity stability test under controlled degradation
         stability_info = evaluate_authenticity_stability(
             image=image,
-            predict_fn=self.predict_raw_probability,
-            original_prob=base_prob,
+            predict_fn=self.predict_calibrated_probability,
+            original_prob=cal_prob,
         )
 
-        # Step 4: Assemble structured multimodal evidence items
+        # Compute flip rate and mean drift
+        drift_values = [res.delta_from_original for res in stability_info.transform_results]
+        mean_drift = float(np.mean(drift_values)) if drift_values else 0.0
+        flips = [
+            1 for res in stability_info.transform_results
+            if (res.predicted_probability >= self.operating_threshold) != (cal_prob >= self.operating_threshold)
+        ]
+        flip_rate = float(len(flips) / len(stability_info.transform_results)) if stability_info.transform_results else 0.0
+
+        # Step 6: Assemble backwards-compatible multimodal evidence items
         evidence_items: List[EvidenceItem] = []
 
         # RGB spatial branch evidence
-        rgb_supports_ai = base_prob >= self.operating_threshold
+        rgb_supports_ai = cal_prob >= self.operating_threshold
         evidence_items.append(
             EvidenceItem(
                 source="rgb_spatial",
                 metric="convnext_feature_anomaly",
-                score=round(base_prob, 4),
+                score=round(cal_prob, 4),
                 weight=1.0,
                 description=(
-                    f"Spatial RGB branch indicates {'high generative artifacts' if rgb_supports_ai else 'natural texture distribution'} "
-                    f"with score {base_prob:.2f}."
+                    f"Spatial ConvNeXt branch yields calibrated probability of {cal_prob:.2f} "
+                    f"({'high generative indicators' if rgb_supports_ai else 'natural texture distribution'})."
                 ),
                 supports_synthetic=rgb_supports_ai,
             )
         )
 
-        # Frequency evidence (FFT / high frequency residual placeholder for Phase 4)
-        img_gray = np.array(image.convert("L"), dtype=np.float32)
-        fft_shift = np.fft.fftshift(np.fft.fft2(img_gray))
-        fft_magnitude = np.log(np.abs(fft_shift) + 1.0)
-        freq_high_energy = float(np.mean(fft_magnitude > np.median(fft_magnitude)))
-        freq_score = float(np.clip(freq_high_energy * 1.5 - 0.25, 0.0, 1.0))
-        freq_supports_ai = freq_score >= self.operating_threshold
-
+        # Frequency evidence (FFT 2D spectral energy)
+        freq_supports_ai = hf_ratio > 0.40
         evidence_items.append(
             EvidenceItem(
                 source="frequency_domain",
                 metric="fft_spectral_distribution",
-                score=round(freq_score, 4),
+                score=round(hf_ratio, 4),
                 weight=0.75,
                 description=(
-                    f"Fourier spectral analysis indicates {'abnormal periodic grids' if freq_supports_ai else 'expected natural 1/f decay'} "
-                    f"(score: {freq_score:.2f})."
+                    f"Fourier spectral analysis observed high-frequency energy ratio of {hf_ratio:.2f} "
+                    f"({'elevated periodic high-frequency residual' if freq_supports_ai else 'expected natural spectral decay'})."
                 ),
                 supports_synthetic=freq_supports_ai,
             )
@@ -171,44 +285,80 @@ class SignalScopeInferenceEngine:
                 )
             )
 
-        # Step 5: Evidence Fusion
-        # Weighted average of available signals
-        total_weight = sum(item.weight for item in evidence_items)
-        fused_prob = sum(item.score * item.weight for item in evidence_items) / (total_weight or 1.0)
-        fused_prob = float(np.clip(fused_prob, 0.0, 1.0))
-
         # Check for disagreement between modalities
         sources_ai = [item.supports_synthetic for item in evidence_items]
         evidence_disagreement = len(set(sources_ai)) > 1
 
-        # Step 6: Calibration and Verdict
-        lower_uncertain = self.operating_threshold - self.uncertainty_band
-        upper_uncertain = self.operating_threshold + self.uncertainty_band
+        # Step 7: Responsible Uncertainty & Decision Boundary
+        lower_uncertain = self.operating_threshold - self.uncertainty_band  # e.g., 0.40
+        upper_uncertain = self.operating_threshold + self.uncertainty_band  # e.g., 0.60
+        is_borderline = lower_uncertain <= cal_prob <= upper_uncertain
+        is_volatile = stability_info.stability_score < 0.60
 
-        if fused_prob >= upper_uncertain:
-            verdict = VerdictEnum.LIKELY_AI_GENERATED
-        elif fused_prob <= lower_uncertain:
-            verdict = VerdictEnum.LIKELY_REAL
-        else:
+        if is_borderline or is_volatile:
             verdict = VerdictEnum.UNCERTAIN
-
-        # If evidence strongly disagrees or stability is poor, downgrade confidence
-        distance_from_boundary = abs(fused_prob - self.operating_threshold)
-        if distance_from_boundary > 0.25 and stability_info.is_stable and not evidence_disagreement:
-            confidence_level = ConfidenceLevelEnum.HIGH
-        elif distance_from_boundary > 0.10 and stability_info.stability_score >= 0.60:
-            confidence_level = ConfidenceLevelEnum.MEDIUM
-        else:
             confidence_level = ConfidenceLevelEnum.LOW
+            uncertain = True
+        elif cal_prob >= upper_uncertain:
+            verdict = VerdictEnum.LIKELY_AI_GENERATED
+            uncertain = False
+            confidence_level = (
+                ConfidenceLevelEnum.HIGH
+                if (cal_prob >= 0.85 and stability_info.is_stable and not evidence_disagreement)
+                else ConfidenceLevelEnum.MEDIUM
+            )
+        else:
+            verdict = VerdictEnum.LIKELY_REAL
+            uncertain = False
+            confidence_level = (
+                ConfidenceLevelEnum.HIGH
+                if (cal_prob <= 0.15 and stability_info.is_stable and not evidence_disagreement)
+                else ConfidenceLevelEnum.MEDIUM
+            )
 
-        # If low confidence or high disagreement on borderline cases, mark uncertain
-        if confidence_level == ConfidenceLevelEnum.LOW and distance_from_boundary <= 0.15:
-            verdict = VerdictEnum.UNCERTAIN
+        # Structured multimodal evidence object matching Phase 6 Section 7 contract
+        evidence = {
+            "spatial": {
+                "available": heatmap_available,
+                "heatmap": heatmap_b64,
+                "attribution_concentration": round(concentration, 4) if concentration is not None else None,
+                "target_layer": "ConvNeXtStage[3].ConvNeXtBlock[2]" if self.has_trained_weights else "baseline_scaffolding",
+            },
+            "spectral": {
+                "available": True,
+                "spectrum": spectrum_b64,
+                "high_frequency_energy_ratio": round(hf_ratio, 4) if hf_ratio is not None else None,
+                "representation": "2D Log-Magnitude Fast Fourier Transform",
+            },
+            "robustness": {
+                "available": True,
+                "stability_score": round(stability_info.stability_score, 4),
+                "prediction_flip_rate": round(flip_rate, 4),
+                "mean_probability_drift": round(mean_drift, 4),
+                "is_stable": stability_info.is_stable,
+                "degradation_impact": stability_info.degradation_impact,
+                "transform_results": [
+                    t.model_dump() if hasattr(t, "model_dump") else t.dict()
+                    for t in stability_info.transform_results
+                ],
+            },
+            "metadata": {
+                "available": True,
+                "has_exif": meta_info.has_exif,
+                "c2pa_present": meta_info.c2pa_detected,
+                "camera_make": meta_info.camera_make,
+                "camera_model": meta_info.camera_model,
+                "software": meta_info.software,
+                "anomalies": meta_info.anomalies,
+            },
+        }
+        # Frequency alias for backwards compatibility
+        evidence["frequency"] = evidence["spectral"]
 
-        # Step 7: Faithful Explanation
+        # Step 8: Faithful Explanation
         explanation = generate_grounded_explanation(
             verdict=verdict,
-            probability=fused_prob,
+            probability=cal_prob,
             confidence_level=confidence_level,
             stability_score=stability_info.stability_score,
             evidence_items=evidence_items,
@@ -217,14 +367,24 @@ class SignalScopeInferenceEngine:
         )
 
         return PredictionResponse(
+            schema_version="1.0",
             verdict=verdict,
-            probability=round(fused_prob, 4),
+            probability=round(cal_prob, 4),
+            raw_probability=round(raw_prob, 4),
+            calibrated_probability=round(cal_prob, 4),
             confidence_level=confidence_level,
             stability_score=stability_info.stability_score,
             evidence_disagreement=evidence_disagreement,
-            evidence=evidence_items,
+            uncertain=uncertain,
+            is_development_placeholder=not self.has_trained_weights,
+            evidence=evidence,
+            structured_evidence=evidence,
+            evidence_items=evidence_items,
             stability=stability_info,
             metadata=meta_info,
             explanation=explanation,
-            heatmap_available=False,
+            heatmap_available=heatmap_available,
         )
+
+
+

@@ -81,6 +81,7 @@ weights/
 *.safetensors
 *.bin
 *.h5
+*.npz
 
 # Frontend & Node artifacts
 node_modules/

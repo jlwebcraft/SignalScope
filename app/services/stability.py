@@ -57,28 +57,42 @@ def evaluate_authenticity_stability(
     predict_fn: Callable[[Image.Image], float],
     original_prob: float,
     stability_threshold: float = 0.75,
+    operating_threshold: float = 0.50,
 ) -> AuthenticityStabilityInfo:
-    """Evaluates how stable a model's prediction is across controlled transformations.
+    """Evaluates how stable a model's prediction is across benchmark-validated transformations.
+
+    Formulation (Phase 4 Robustness Benchmark):
+        S = C * (1.0 - 0.5 * (mean_drift + max_drift))
+    where:
+        C = fraction of transformations retaining original hard decision (Consistency)
+        mean_drift = (1/K) * sum(|p_k - p_0|)
+        max_drift = max(|p_k - p_0|)
 
     Args:
         image: Original RGB PIL Image.
         predict_fn: Callable that accepts a PIL Image and returns synthetic probability in [0, 1].
         original_prob: Model's predicted synthetic probability on pristine original image.
-        stability_threshold: Minimum stability score considered robust.
+        stability_threshold: Minimum stability score considered robust (default: 0.75).
+        operating_threshold: Binary classification threshold (default: 0.50).
 
     Returns:
-        AuthenticityStabilityInfo with stability score and detailed breakdown.
+        AuthenticityStabilityInfo with stability score, per-transform results, and degradation impact.
     """
     transforms: List[Tuple[str, Image.Image]] = [
         ("original", image),
-        ("jpeg_recompression", apply_jpeg_compression(image, quality=70)),
-        ("resize_down_up", apply_resize_down_up(image, scale_factor=0.6)),
+        ("jpeg_95", apply_jpeg_compression(image, quality=95)),
+        ("jpeg_85", apply_jpeg_compression(image, quality=85)),
+        ("jpeg_70", apply_jpeg_compression(image, quality=70)),
+        ("resize_down_up", apply_resize_down_up(image, scale_factor=0.70)),
         ("screenshot_simulation", apply_screenshot_simulation(image)),
-        ("light_crop_resize", apply_light_crop_resize(image, crop_fraction=0.92)),
+        ("light_crop_resize", apply_light_crop_resize(image, crop_fraction=0.90)),
     ]
 
     results: List[StabilityTransformResult] = []
     deltas: List[float] = []
+    trans_probs: List[float] = []
+
+    orig_hard = int(original_prob >= operating_threshold)
 
     for name, transformed_img in transforms:
         try:
@@ -88,6 +102,9 @@ def evaluate_authenticity_stability(
                 prob = float(predict_fn(transformed_img))
             delta = abs(prob - original_prob)
             deltas.append(delta)
+            if name != "original":
+                trans_probs.append(prob)
+
             results.append(
                 StabilityTransformResult(
                     transform_name=name,
@@ -97,7 +114,6 @@ def evaluate_authenticity_stability(
             )
         except Exception as exc:
             logger.warning(f"Error applying stability test '{name}': {exc}")
-            # In case of failure on a transform, record max delta
             results.append(
                 StabilityTransformResult(
                     transform_name=name,
@@ -105,17 +121,29 @@ def evaluate_authenticity_stability(
                     delta_from_original=0.0,
                 )
             )
+            if name != "original":
+                trans_probs.append(original_prob)
+                deltas.append(0.0)
 
-    # Calculate stability score: 1.0 - mean absolute delta (penalized by max delta)
-    mean_delta = float(np.mean(deltas)) if deltas else 0.0
-    max_delta = float(np.max(deltas)) if deltas else 0.0
+    # Validated stability formula
+    if trans_probs:
+        matching = sum(1 for p in trans_probs if int(p >= operating_threshold) == orig_hard)
+        consistency = matching / len(trans_probs)
+        drifts = [abs(p - original_prob) for p in trans_probs]
+        mean_drift = float(np.mean(drifts))
+        max_drift = float(np.max(drifts))
+        stability_metric = consistency * max(0.0, 1.0 - 0.5 * (mean_drift + max_drift))
+    else:
+        consistency = 1.0
+        mean_drift = 0.0
+        max_drift = 0.0
+        stability_metric = 1.0
 
-    # Composite stability metric: heavily penalize wild flip in prediction
-    stability_metric = max(0.0, min(1.0, 1.0 - (0.6 * mean_delta + 0.4 * max_delta)))
+    stability_metric = float(max(0.0, min(1.0, stability_metric)))
 
-    if max_delta < 0.10:
+    if max_drift < 0.10 and consistency == 1.0:
         impact = "minimal"
-    elif max_delta < 0.25:
+    elif max_drift < 0.30 and consistency >= 0.80:
         impact = "moderate"
     else:
         impact = "severe"
