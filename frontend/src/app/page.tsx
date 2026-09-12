@@ -76,7 +76,7 @@ export default function HomePage() {
         err instanceof Error ? err.message : "Failed to connect to SignalScope inference server.";
       setErrorMsg(
         message.includes("Failed to fetch")
-          ? "Unable to reach the SignalScope backend at http://localhost:8000. Please ensure the API service is running."
+          ? `Unable to reach the SignalScope backend at ${API_BASE_URL}. Please ensure the API service is running.`
           : message
       );
     } finally {
