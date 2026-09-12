@@ -252,15 +252,17 @@ Trained strictly on the local training partition (85,000 train / 15,000 val) wit
 - [x] **Phase 2A — Reproducible ML Stack**: Python 3.13 isolated Conda environment (`signalscope`), PyTorch 2.6.0+cu124, timm, RTX 3050 GPU verification.
 - [x] **Phase 2B — Dataset Pipeline**: Non-destructive audit of 100,000 training images, verified class balance (1.00:1), fast scandir loader, zero-leakage split logic, model smoke test.
 - [x] **Phase 2C — Baseline Model Training**: Pretrained ConvNeXt-Tiny classifier training on local split, baseline metrics (ROC-AUC: 0.9992, Macro-F1: 0.9908, FPR: 1.03% @ threshold 0.50).
-- [ ] **Phase 3 — Generalization / Frequency Features**: Frequency-domain representation (2D FFT), spatial-frequency fusion head.
-- [ ] **Phase 5 — Robustness**: Controlled degradation evaluation (JPEG, resize, screenshots) and stability score benchmarking.
-- [ ] **Phase 6 — Calibration**: Temperature scaling, probability calibration, threshold optimization for target 5% FPR.
-- [ ] **Phase 7 — Explainability**: Grad-CAM saliency heatmaps, spectral anomaly plots, grounded natural language explanations.
+- [x] **Phase 3 — Frequency Features + Generalization**: 2D FFT & 2D DCT spectral branches, Dual-Branch Fusion Detector (ConvNeXt-Tiny + FFT 32x32: ROC-AUC: 0.9992, Macro-F1: 0.9875, FPR: 0.93%), complementarity analysis.
+- [x] **Phase 4 — Robustness & Authenticity Stability**: Controlled degradation benchmark across 7 conditions (JPEG 95, 85, 70, Resize, Screenshot, Light Edit). Bounded Authenticity Stability Score $S \in [0, 1]$ ($S = C \times (1 - 0.5(\bar{D} + D_{\max}))$, Fusion mean $S = 0.6885$, Baseline mean $S = 0.6820$).
+- [ ] **Phase 5 — Calibration + Faithful Explainability**: Temperature scaling, probability calibration, Grad-CAM saliency heatmaps, spectral anomaly plots, grounded natural language explanations.
 - [ ] **Phase 8 — Bonus Modules**: C2PA Content Credentials provenance, generator attribution.
 - [ ] **Phase 9 — Backend**: Hardened production API endpoints and streaming.
 - [ ] **Phase 10 — Frontend**: Next.js + TypeScript interactive authenticity analysis dashboard.
 - [ ] **Phase 11 — Deployment**: Dockerized container deployment.
 - [ ] **Phase 12 — Final Verification**: End-to-end judge reproducibility audit (< 10 minutes).
+
+> [!NOTE]
+> **Validation Notice**: All reported robustness and stability metrics are local validation results evaluated on partitions constructed from `train/`. They are not the organizer's unseen-generator test results. The official held-out test partition `test/` remains strictly untouched.
 
 ---
 

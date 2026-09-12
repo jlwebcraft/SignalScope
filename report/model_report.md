@@ -159,8 +159,63 @@ All training and validation experiments strictly consume the `train/` directory.
 
 ---
 
-## 5. Robustness & Stability Analysis
-*(To be populated in Phase 5)*
+## 5. Robustness & Authenticity Stability Analysis (Phase 4)
+
+### 5.1 Why Robustness Matters
+In real-world deployment (SIH Bonus Module C), media rarely arrives in pristine raw formats. Images undergo social media recompression (JPEG transcoding), resolution rescaling, screenshot captures, and cropping. A dependable detector must not exhibit volatile decision flips or wild probability swings under routine degradations.
+
+> [!IMPORTANT]
+> **Data Partition Compliance**: These are local validation robustness results evaluated strictly on 3,000 stratified samples (1,500 authentic, 1,500 synthetic) from `train/` (`seed=42`). They are **not** the organizer's unseen-generator test results. The official held-out test partition `C:\Programming\SignalScope-data\test` remains strictly untouched.
+
+### 5.2 Controlled Transformations Tested
+Each image was evaluated under 7 controlled conditions applied directly to native 32x32 representations prior to model input:
+1. **Original**: Pristine uncompressed native 32x32 image
+2. **JPEG 95**: High-quality JPEG recompression ($Q = 95$)
+3. **JPEG 85**: Typical web JPEG recompression ($Q = 85$)
+4. **JPEG 70**: Aggressive social media transmission compression ($Q = 70$)
+5. **Resize**: Bilinear downsample to $70\%$ scale ($22 \times 22$) + Bicubic restoration to $32 \times 32$
+6. **Screenshot**: Subpixel BoxBlur ($r = 0.5$) + JPEG re-encoding ($Q = 80$)
+7. **Light Edit**: $90\%$ center crop ($28 \times 28$) + Bilinear restoration to $32 \times 32$
+
+### 5.3 Comparative Robustness Results (3,000 Stratified Validation Samples)
+
+| Model | Transform | ROC-AUC | Macro-F1 | Accuracy | FPR | Flip Rate | Mean Prob Drift |
+|---|---|---|---|---|---|---|---|
+| **Baseline (ConvNeXt)** | Original | **0.9995** | 0.9910 | 99.10% | 1.00% | 0.00% | 0.0000 |
+| **Fusion (RGB+FFT)** | Original | **0.9991** | 0.9857 | 98.57% | 1.00% | 0.00% | 0.0000 |
+| **Baseline (ConvNeXt)** | JPEG 95 | **0.9995** | 0.9903 | 99.03% | 0.93% | 0.13% | 0.0013 |
+| **Fusion (RGB+FFT)** | JPEG 95 | **0.9993** | 0.9853 | 98.53% | 0.93% | 0.10% | 0.0020 |
+| **Baseline (ConvNeXt)** | JPEG 85 | **0.9994** | 0.9883 | 98.83% | 1.33% | 0.27% | 0.0031 |
+| **Fusion (RGB+FFT)** | JPEG 85 | **0.9990** | 0.9843 | 98.43% | 1.13% | 0.27% | 0.0033 |
+| **Baseline (ConvNeXt)** | JPEG 70 | **0.9995** | 0.9887 | 98.87% | 1.53% | 0.30% | 0.0039 |
+| **Fusion (RGB+FFT)** | JPEG 70 | **0.9990** | 0.9847 | 98.47% | 1.27% | 0.23% | 0.0033 |
+| **Baseline (ConvNeXt)** | Resize (0.7x) | **0.9494** | 0.6197 | 66.27% | 0.13% | 33.77% | 0.3348 |
+| **Fusion (RGB+FFT)** | Resize (0.7x) | **0.9521** | 0.6352 | 67.40% | 0.00% | 32.17% | 0.3196 |
+| **Baseline (ConvNeXt)** | Screenshot | **0.9213** | 0.5312 | 60.40% | 0.20% | 39.63% | 0.3932 |
+| **Fusion (RGB+FFT)** | Screenshot | **0.9159** | 0.5325 | 60.53% | 0.00% | 39.03% | 0.3872 |
+| **Baseline (ConvNeXt)** | Light Edit | **0.9925** | 0.8594 | 86.20% | 0.13% | 13.77% | 0.1375 |
+| **Fusion (RGB+FFT)** | Light Edit | **0.9870** | 0.8491 | 85.23% | 0.07% | 14.27% | 0.1441 |
+
+### 5.4 Authenticity Stability Score Formulation
+To quantify prediction stability per sample across transformations, we define the deterministic metric $S \in [0, 1]$:
+$$S = C \times \left(1 - \frac{\bar{D} + D_{\max}}{2}\right)$$
+- **Consistency ($C$)**: Fraction of transformations retaining original classification ($C = \frac{1}{K} \sum_{k=1}^K \mathbb{I}(\hat{y}_k = \hat{y}_0)$).
+- **Mean Absolute Drift ($\bar{D}$)**: Average probability change $\frac{1}{K} \sum_{k=1}^K |p_k - p_0|$.
+- **Max Absolute Drift ($D_{\max}$)**: Maximum probability change $\max_k |p_k - p_0|$.
+
+#### Empirical Stability Distribution
+| Metric | ConvNeXt Baseline | RGB + FFT Fusion |
+|---|---|---|
+| **Mean Stability Score** | **0.6820** | **0.6885** |
+| **Median Stability Score** | 0.9991 | 0.9996 |
+| **Std Deviation** | 0.3807 | 0.3819 |
+| **Fraction Stable ($S \ge 0.75$)** | **59.23%** | **60.20%** |
+
+### 5.5 Key Observations & Scientific Findings
+1. **JPEG Invariance**: Both models are resilient to JPEG recompression ($Q=95, 85, 70$), maintaining $\text{AUC} \ge 0.9990$ and flip rates $< 0.30\%$.
+2. **Spatial Rescaling & Blur Sensitivity**: Downsampling and subpixel blur degrade synthetic recall (dropping from $\approx 99\%$ to $21-35\%$) while false positives remain extremely low ($\text{FPR} \le 0.20\%$). Synthetic high frequencies are smoothed, causing the model to become conservative and classify ambiguous images as Real.
+3. **Fusion Resilience on Resizing**: Fusion retained higher degraded AUC on resolution resizing ($0.9521$ vs. $0.9494$) and a lower flip rate ($32.17\%$ vs. $33.77\%$), and achieved a higher overall stable fraction ($60.20\%$ vs. $59.23\%$).
+4. **Responsible Uncertainty**: Volatility under spatial perturbation directly motivates flagging low-stability samples ($S < 0.75$) as *"Uncertain / Human Review Recommended"* rather than outputting misleading overconfident verdicts.
 
 ---
 
