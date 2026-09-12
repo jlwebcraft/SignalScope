@@ -1,0 +1,96 @@
+{
+  "experiment_name": "rgb_frequency_fusion",
+  "date": "2026-09-12T18:49:28.165888+00:00",
+  "git_commit": "9435825c457a5e75085c0dc74855e47261497182",
+  "model_architecture": "DualBranchFusionDetector (ConvNeXt-Tiny 224x224 + FFT 32x32)",
+  "dataset_split": {
+    "train_samples": 85000,
+    "val_samples": 15000,
+    "test_partition": "STRICTLY_HELD_OUT"
+  },
+  "random_seed": 42,
+  "input_size": "224x224_and_32x32",
+  "transform": "fusion",
+  "optimizer": "AdamW",
+  "learning_rate": 0.0001,
+  "batch_size": 64,
+  "epoch_count": 2,
+  "best_epoch": 2,
+  "loss": 0.0485,
+  "metrics_default_thr": {
+    "operating_threshold": 0.5,
+    "roc_auc": 0.9992,
+    "macro_f1": 0.9875,
+    "accuracy": 0.9875,
+    "precision": 0.9906,
+    "recall": 0.9844,
+    "fpr": 0.0093,
+    "specificity": 0.9907,
+    "confusion_matrix": {
+      "tn": 7430,
+      "fp": 70,
+      "fn": 117,
+      "tp": 7383,
+      "matrix": [
+        [
+          7430,
+          70
+        ],
+        [
+          117,
+          7383
+        ]
+      ]
+    },
+    "sample_count": {
+      "total": 15000,
+      "real": 7500,
+      "synthetic": 7500
+    }
+  },
+  "metrics_optimal_thr": {
+    "operating_threshold": 0.158935546875,
+    "roc_auc": 0.9992,
+    "macro_f1": 0.9881,
+    "accuracy": 0.9881,
+    "precision": 0.9881,
+    "recall": 0.988,
+    "fpr": 0.0119,
+    "specificity": 0.9881,
+    "confusion_matrix": {
+      "tn": 7411,
+      "fp": 89,
+      "fn": 90,
+      "tp": 7410,
+      "matrix": [
+        [
+          7411,
+          89
+        ],
+        [
+          90,
+          7410
+        ]
+      ]
+    },
+    "sample_count": {
+      "total": 15000,
+      "real": 7500,
+      "synthetic": 7500
+    }
+  },
+  "threshold_analysis": {
+    "default_threshold": 0.5,
+    "optimal_threshold_youden": 0.1589,
+    "max_youden_j": 0.9761
+  },
+  "training_time_seconds": 2268.4,
+  "peak_vram_gb": 4.15,
+  "checkpoint_path": "C:\\Programming\\SignalScope\\checkpoints\\fusion\\best_model.pt",
+  "figures": {
+    "training_curves": "C:\\Programming\\SignalScope\\report\\figures\\fusion_training_curves.png",
+    "roc_curve": "C:\\Programming\\SignalScope\\report\\figures\\fusion_roc_curve.png",
+    "confusion_matrix": "C:\\Programming\\SignalScope\\report\\figures\\fusion_confusion_matrix.png"
+  },
+  "notes": "Experimental evaluation on local validation split (15,000 samples). Raw model probabilities are uncalibrated. Evaluated using best checkpoint from Epoch 2."
+}

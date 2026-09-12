@@ -115,3 +115,88 @@ def test_dual_branch_dataset(tmp_path: Path):
     assert native_tensor.shape == (3, 32, 32)
     assert target.item() == 1.0
     assert meta["generator"] == "MockGenerator"
+
+
+def test_dual_branch_fusion_forward_pass():
+    """Verifies DualBranchFusionDetector forward pass, output shape, and probability range."""
+    from model.architectures.fusion import DualBranchFusionDetector
+
+    model = DualBranchFusionDetector(pretrained=False, frequency_feature_dim=128)
+    model.eval()
+
+    spatial_input = torch.randn(2, 3, 224, 224)
+    native_input = torch.randn(2, 3, 32, 32)
+
+    with torch.no_grad():
+        fused_logits = model(spatial_input, x_native=native_input)
+        probs = model.predict_probability(spatial_input, x_native=native_input)
+        fused_aux, sp_aux, fr_aux = model(spatial_input, x_native=native_input, return_aux=True)
+
+    assert fused_logits.shape == (2, 1)
+    assert probs.shape == (2, 1)
+    assert (probs >= 0.0).all() and (probs <= 1.0).all()
+    assert sp_aux.shape == (2, 1)
+    assert fr_aux.shape == (2, 1)
+
+
+def test_frequency_only_checkpoint_save_and_load(tmp_path: Path):
+    """Verifies FrequencyCNNBranch checkpoint saving and loading."""
+    model = FrequencyCNNBranch(in_channels=1, feature_dim=128)
+    ckpt_path = tmp_path / "freq_test.pt"
+
+    torch.save(
+        {
+            "model_name": "FrequencyCNNBranch (FFT 32x32)",
+            "state_dict": model.state_dict(),
+            "val_auc": 0.937,
+        },
+        ckpt_path,
+    )
+
+    assert ckpt_path.exists()
+    loaded = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    assert loaded["val_auc"] == 0.937
+
+    new_model = FrequencyCNNBranch(in_channels=1, feature_dim=128)
+    new_model.load_state_dict(loaded["state_dict"])
+    model.eval()
+    new_model.eval()
+
+    dummy = torch.randn(2, 1, 32, 32)
+    with torch.no_grad():
+        out1 = model(dummy)
+        out2 = new_model(dummy)
+    assert torch.allclose(out1, out2)
+
+
+def test_fusion_checkpoint_save_and_load(tmp_path: Path):
+    """Verifies DualBranchFusionDetector checkpoint saving and loading."""
+    from model.architectures.fusion import DualBranchFusionDetector
+
+    model = DualBranchFusionDetector(pretrained=False, frequency_feature_dim=128)
+    ckpt_path = tmp_path / "fusion_test.pt"
+
+    torch.save(
+        {
+            "model_name": "DualBranchFusionDetector",
+            "state_dict": model.state_dict(),
+            "val_auc": 0.999,
+        },
+        ckpt_path,
+    )
+
+    assert ckpt_path.exists()
+    loaded = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    assert loaded["val_auc"] == 0.999
+
+    new_model = DualBranchFusionDetector(pretrained=False, frequency_feature_dim=128)
+    new_model.load_state_dict(loaded["state_dict"])
+    model.eval()
+    new_model.eval()
+
+    sp = torch.randn(2, 3, 224, 224)
+    nat = torch.randn(2, 3, 32, 32)
+    with torch.no_grad():
+        out1 = model(sp, x_native=nat)
+        out2 = new_model(sp, x_native=nat)
+    assert torch.allclose(out1, out2)

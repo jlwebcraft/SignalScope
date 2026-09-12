@@ -93,11 +93,11 @@ def generate_spectral_comparison(
     axes[1, 0].axis("off")
 
     im_fft_fake = axes[1, 1].imshow(fft_fake, cmap="inferno", vmin=0, vmax=1)
-    axes[1, 1].set_title("2D FFT Log-Magnitude\n(Periodic Artifacts)", fontsize=11, fontweight="bold")
+    axes[1, 1].set_title("2D FFT Log-Magnitude\n(DC Centered)", fontsize=11, fontweight="bold")
     plt.colorbar(im_fft_fake, ax=axes[1, 1], fraction=0.046, pad=0.04)
 
     im_dct_fake = axes[1, 2].imshow(dct_fake, cmap="plasma", vmin=0, vmax=1)
-    axes[1, 2].set_title("2D DCT-II Representation\n(High-Freq Grid Peaks)", fontsize=11, fontweight="bold")
+    axes[1, 2].set_title("2D DCT-II Representation\n(Top-Left DC)", fontsize=11, fontweight="bold")
     plt.colorbar(im_dct_fake, ax=axes[1, 2], fraction=0.046, pad=0.04)
 
     axes[1, 3].plot(radius_bins, radial_fake, "s-", color="#dc2626", lw=2, label="Synthetic Radial Decay")

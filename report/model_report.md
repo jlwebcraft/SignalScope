@@ -128,14 +128,34 @@ All training and validation experiments strictly consume the `train/` directory.
 
 ---
 
-### Comparative Evaluation Matrix
+### Comparative Evaluation Matrix (Local Validation Split: 15,000 samples)
 
 | Model Architecture | Local Val ROC-AUC | Local Val Macro-F1 | Local Val Accuracy | Local Val FPR | Held-out SIH Test | Notes |
 |---|---|---|---|---|---|---|
 | **ConvNeXt-Tiny Spatial Baseline** | **0.9992** | **0.9908** | **99.08%** | **1.03%** | *Pending* | Pure transfer-learning baseline (Phase 2C) |
-| FFT Frequency Branch Only | TBD | TBD | TBD | TBD | *Pending* | Phase 3 |
-| Dual-Branch Fusion Network | TBD | TBD | TBD | TBD | *Pending* | Phase 3 |
-| Calibrated Fusion + Stability | TBD | TBD | TBD | TBD | *Pending* | Phase 4 |
+| **FFT Frequency Branch Only (32x32)** | **0.9372** | **0.8596** | **86.01%** | **19.53%** | *Pending* | 2D FFT log-magnitude on native resolution |
+| **DCT Frequency Branch Only (32x32)** | **0.9610** | **0.8983** | **89.83%** | **10.32%** | *Pending* | 2D DCT Type-II log-magnitude on native resolution |
+| **RGB + FFT Dual-Branch Fusion** | **0.9992** | **0.9875** | **98.75%** | **0.93%** | *Pending* | Joint spatial-spectral representation (Best Epoch 2) |
+| Calibrated Fusion + Stability | TBD | TBD | TBD | TBD | *Pending* | Phase 4 / Phase 6 |
+
+*Methodological Note*: In the sampled training data, synthetic examples showed different spectral distributions from real examples, including localized high-frequency structure. The cause and generality of these patterns remain to be established experimentally. Local validation only; unseen-generator generalization remains pending organizer test evaluation. Raw sigmoid outputs are uncalibrated probabilities.
+
+### Phase 3 Complementarity & Error Analysis Summary
+- **Prediction Score Correlation**:
+  - RGB Spatial vs. Frequency (FFT): Pearson $r = 0.7793$ | Spearman $\rho = 0.7694$
+  - RGB Spatial vs. Fusion: Pearson $r = 0.9873$
+  - Frequency vs. Fusion: Pearson $r = 0.7755$
+- **2x2 Contingency Table (RGB Baseline vs. Frequency-Only)**:
+  - Both Correct: 12,841 (85.61%)
+  - RGB Correct / Frequency Wrong: 2,021 (13.47%)
+  - RGB Wrong / Frequency Correct: 60 (0.40%)
+  - Both Wrong: 78 (0.52%)
+  - Disagreement Rate: 13.87% (2,081 samples)
+- **Fusion Impact Relative to Baseline**:
+  - Samples where Fusion fixed RGB baseline error: 45
+  - Samples where Fusion introduced new error: 94
+  - Net correctness change: -49 samples (-0.33% accuracy)
+  - FPR reduction: Fusion lowered FPR from 1.03% (Baseline) to 0.93% (Fusion) at default threshold 0.50.
 
 ---
 
