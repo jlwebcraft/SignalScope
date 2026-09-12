@@ -51,6 +51,10 @@ class SignalScopeInferenceEngine:
             uncertainty_band: Half-width around threshold where verdict is deemed 'uncertain'.
         """
         self.config_path = config_path
+        if checkpoint_path is None:
+            default_ckpt = Path("checkpoints/baseline_convnext/best_model.pt")
+            if default_ckpt.exists():
+                checkpoint_path = str(default_ckpt)
         self.checkpoint_path = checkpoint_path
         self.operating_threshold = operating_threshold
         self.uncertainty_band = uncertainty_band
@@ -90,10 +94,11 @@ class SignalScopeInferenceEngine:
                 scaler_path = Path(self.checkpoint_path).parent / "temperature_scaler.json"
                 if scaler_path.exists():
                     try:
-                        self.scaler = TemperatureScaler.load(scaler_path)
+                        self.scaler.load(scaler_path)
                         logger.info(f"Loaded temperature scaler (T={self.scaler.temperature:.4f}) from {scaler_path}")
                     except Exception as s_err:
                         logger.warning(f"Could not load temperature scaler from {scaler_path}: {s_err}")
+
 
                 self._is_ready = True
                 logger.info(f"Loaded trained checkpoint from {self.checkpoint_path} ({self.model_name}) onto {self.device}")
