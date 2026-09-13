@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { MessageSquareText, ShieldAlert, Sparkles } from "lucide-react";
 import { PredictionResponse } from "@/types/prediction";
 
 interface ExplanationCardProps {
@@ -17,27 +16,38 @@ export const ExplanationCard: React.FC<ExplanationCardProps> = ({ prediction }) 
     // Spatial
     if (evidence.spatial.available) {
       if (verdict === "likely_ai_generated") {
-        items.push("Spatial feature attribution observed localized structural anomalies in highlighted regions.");
+        items.push("Spatial feature attribution identified localized structural anomalies in highlighted areas.");
       } else {
-        items.push("Spatial feature attribution indicates broad natural gradient consistency without anomalous localized focus.");
+        items.push("Spatial feature attribution exhibits natural continuous gradients across the image plane.");
       }
     }
 
     // Spectral
     if (evidence.spectral.available) {
       if (evidence.spectral.high_frequency_energy_ratio && evidence.spectral.high_frequency_energy_ratio > 0.40) {
-        items.push("2D Fourier spectral analysis observed elevated high-frequency periodic residuals.");
+        items.push("2D Fourier spectral analysis identified elevated high-frequency periodic residuals typical of generative upsampling.");
       } else {
-        items.push("2D Fourier spectral analysis observed expected continuous power-law energy decay.");
+        items.push("2D Fourier spectral analysis observed standard continuous power-law decay characteristic of physical camera sensors.");
       }
     }
 
     // Robustness
     if (evidence.robustness.available) {
       if (evidence.robustness.stability_score >= 0.80) {
-        items.push("Prediction stability was high under the transformations evaluated for this sample.");
+        items.push("Prediction stability remained high across controlled compression and downscaling transformations.");
       } else {
-        items.push("Prediction exhibited sensitivity or probability drift under tested compression/rescaling probes.");
+        items.push("Prediction exhibited sensitivity or decision drift under tested perturbation probes.");
+      }
+    }
+
+    // Provenance
+    if (evidence.metadata.available) {
+      if (evidence.metadata.c2pa_present) {
+        items.push("C2PA content credentials verified cryptographic provenance manifest.");
+      } else if (evidence.metadata.has_exif) {
+        items.push("Standard camera EXIF headers are recorded.");
+      } else {
+        items.push("No EXIF or C2PA provenance headers present (typical for web distribution).");
       }
     }
 
@@ -47,33 +57,36 @@ export const ExplanationCard: React.FC<ExplanationCardProps> = ({ prediction }) 
   const highlights = getHighlights();
 
   return (
-    <div className="glass-panel rounded-2xl p-5 border border-slate-800 space-y-4">
-      <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
-        <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
-          <MessageSquareText className="w-4 h-4" />
-        </div>
-        <div>
-          <h3 className="text-sm font-bold text-white">Evidence-Grounded Explanation</h3>
-          <p className="text-[11px] text-slate-400">Deterministic synthesis of model observations</p>
-        </div>
+    <div className="forensic-panel p-5 space-y-4">
+      {/* Header */}
+      <div className="border-b border-slate-800 pb-2.5">
+        <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+          5. Forensic Synthesis & Evidence Summary
+        </h3>
+        <p className="text-[11px] font-mono text-slate-500 mt-0.5">
+          Deterministic summary grounded in quantitative feature observations
+        </p>
       </div>
 
-      {/* Synthesis Paragraph */}
-      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs text-slate-200 leading-relaxed">
-        <p className="font-sans">{explanation}</p>
+      {/* Synthesis Narrative */}
+      <div className="p-3.5 rounded bg-slate-900/60 border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans">
+        <div className="font-semibold text-slate-100 mb-1 uppercase text-[10px] font-mono tracking-wider">
+          Forensic Finding:
+        </div>
+        <p>{explanation}</p>
       </div>
 
-      {/* Key Factors Checklist */}
+      {/* Evidence Factors */}
       {highlights.length > 0 && (
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Primary Contributing Factors:
+          <div className="text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider">
+            Evidence Supporting This Finding:
           </div>
-          <ul className="space-y-1.5">
+          <ul className="space-y-1.5 font-mono text-xs text-slate-300">
             {highlights.map((item, idx) => (
-              <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
-                <span className="text-indigo-400 font-bold shrink-0">•</span>
-                <span>{item}</span>
+              <li key={idx} className="flex items-start gap-2">
+                <span className="text-slate-500 font-bold shrink-0">—</span>
+                <span className="leading-relaxed">{item}</span>
               </li>
             ))}
           </ul>
@@ -81,12 +94,9 @@ export const ExplanationCard: React.FC<ExplanationCardProps> = ({ prediction }) 
       )}
 
       {/* Mandatory Disclaimer */}
-      <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-[11px] text-slate-400 leading-relaxed flex items-start gap-2">
-        <ShieldAlert className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-        <div>
-          <span className="font-semibold text-slate-300">Mandatory Disclaimer: </span>
-          {disclaimer}
-        </div>
+      <div className="p-2.5 rounded bg-slate-950/60 border border-slate-800/80 text-[11px] text-slate-500 leading-relaxed">
+        <span className="font-semibold text-slate-400">Mandatory Forensic Disclaimer: </span>
+        {disclaimer}
       </div>
     </div>
   );
