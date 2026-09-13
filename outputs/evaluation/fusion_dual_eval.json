@@ -1,0 +1,64 @@
+{
+  "fusion_local_val": {
+    "operating_threshold": 0.5,
+    "roc_auc": 0.9992,
+    "macro_f1": 0.9875,
+    "accuracy": 0.9875,
+    "precision": 0.9906,
+    "recall": 0.9844,
+    "fpr": 0.0093,
+    "specificity": 0.9907,
+    "confusion_matrix": {
+      "tn": 7430,
+      "fp": 70,
+      "fn": 117,
+      "tp": 7383,
+      "matrix": [
+        [
+          7430,
+          70
+        ],
+        [
+          117,
+          7383
+        ]
+      ]
+    },
+    "sample_count": {
+      "total": 15000,
+      "real": 7500,
+      "synthetic": 7500
+    }
+  },
+  "fusion_new_val": {
+    "operating_threshold": 0.5,
+    "roc_auc": 0.6054,
+    "macro_f1": 0.4734,
+    "accuracy": 0.5528,
+    "precision": 0.5297,
+    "recall": 0.941,
+    "fpr": 0.8354,
+    "specificity": 0.1646,
+    "confusion_matrix": {
+      "tn": 92,
+      "fp": 467,
+      "fn": 33,
+      "tp": 526,
+      "matrix": [
+        [
+          92,
+          467
+        ],
+        [
+          33,
+          526
+        ]
+      ]
+    },
+    "sample_count": {
+      "total": 1118,
+      "real": 559,
+      "synthetic": 559
+    }
+  }
+}

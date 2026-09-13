@@ -104,8 +104,12 @@ def verify_split_integrity(
     val_old_paths = set(str(s[0]) for s in val_old_samples)
     val_new_paths = set(str(s[0]) for s in val_new_samples)
 
-    assert len(train_paths.intersection(val_old_paths)) == 0, "Leakage: Train overlaps with val_old!"
-    assert len(train_paths.intersection(val_new_paths)) == 0, "Leakage: Train overlaps with val_new!"
-    assert len(val_old_paths.intersection(val_new_paths)) == 0, "Leakage: val_old overlaps with val_new!"
+    if len(train_paths.intersection(val_old_paths)) > 0:
+        raise ValueError("Leakage detected: Train overlaps with val_old!")
+    if len(train_paths.intersection(val_new_paths)) > 0:
+        raise ValueError("Leakage detected: Train overlaps with val_new!")
+    if len(val_old_paths.intersection(val_new_paths)) > 0:
+        raise ValueError("Leakage detected: val_old overlaps with val_new!")
 
     logger.info("Split integrity check passed: zero leakage between Train, Val-Old, and Val-New.")
+    return True

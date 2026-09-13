@@ -89,6 +89,7 @@ def get_experiment3_transforms(image_size: int = 224) -> transforms.Compose:
         transforms.RandomResizedCrop(image_size, scale=(0.8, 1.0)),
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1),
+        transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 1.0))], p=0.2),
         transforms.ToTensor(),
         normalize,
     ])
@@ -167,33 +168,33 @@ def run_experiment(
         train_samples = train_official + train_v2
         description = "Experiment 1: Full Augmented Pool (Official 85k + AIGen 9.7k)"
     elif experiment_id == "exp2":
-        # Balanced Mixed-Domain Pool: 20k Official + 9.7k AIGen + 10k Photographic Real
+        # Balanced Mixed-Domain Pool: Controlled 1:1 Real/Synthetic and controlled source balance
         rng = np.random.RandomState(seed)
         real_off = [s for s in train_official if s[1] == 0]
         fake_off = [s for s in train_official if s[1] == 1]
         
-        # 10k official real + 10k official fake
-        idx_r = rng.permutation(len(real_off))[:10000]
+        # 10k official fake, 5k official real
+        idx_r = rng.permutation(len(real_off))[:5000]
         idx_f = rng.permutation(len(fake_off))[:10000]
         sub_official = [real_off[i] for i in idx_r] + [fake_off[i] for i in idx_f]
 
-        # 9.7k AIGen train (4,879 real + 4,879 fake)
-        # Plus photographic real samples from REAL
-        v2_real = get_v2_real_samples(limit_per_category=1100, seed=seed) # ~10k photographic real
+        # 9,758 AIGen train (4,879 real + 4,879 fake)
+        # Plus 5,000 photographic real samples from REAL
+        v2_real = get_v2_real_samples(limit_per_category=556, seed=seed)
         train_samples = sub_official + train_v2 + v2_real
-        description = "Experiment 2: Balanced Mixed-Domain Pool (20k official + 9.7k AIGen + 10k photo-real)"
+        description = "Experiment 2: Balanced Mixed-Domain Pool (15k official + 9.7k AIGen + 5k photo-real = ~29.7k total, 50% Real / 50% Synthetic)"
     elif experiment_id == "exp3":
-        # Balanced Mixed-Domain Pool + Multi-Scale & JPEG Compression Augmentation
+        # Balanced Mixed-Domain Pool + Multi-Scale, JPEG Compression & Mild Blur Augmentation
         rng = np.random.RandomState(seed)
         real_off = [s for s in train_official if s[1] == 0]
         fake_off = [s for s in train_official if s[1] == 1]
-        idx_r = rng.permutation(len(real_off))[:10000]
+        idx_r = rng.permutation(len(real_off))[:5000]
         idx_f = rng.permutation(len(fake_off))[:10000]
         sub_official = [real_off[i] for i in idx_r] + [fake_off[i] for i in idx_f]
-        v2_real = get_v2_real_samples(limit_per_category=1100, seed=seed)
+        v2_real = get_v2_real_samples(limit_per_category=556, seed=seed)
         train_samples = sub_official + train_v2 + v2_real
         custom_transforms = get_experiment3_transforms(image_size=224)
-        description = "Experiment 3: Balanced Mixed-Domain + Multi-Scale/Compression Augmentation"
+        description = "Experiment 3: Balanced Mixed-Domain + Forensic Multi-Scale/JPEG/Blur Augmentation"
     else:
         raise ValueError(f"Unknown experiment_id: {experiment_id}")
 
@@ -263,8 +264,9 @@ def run_experiment(
             running_loss += loss.item() * bs
             total_seen += bs
 
-            if (step + 1) % 100 == 0 or (step + 1) == len(train_loader):
-                logger.info(f"Epoch [{epoch}/{epochs}] Step [{step + 1}/{len(train_loader)}] - Loss: {loss.item():.4f}")
+            if (step + 1) % 50 == 0 or (step + 1) == len(train_loader):
+                logger.info(f"  [{experiment_id.upper()}] Epoch [{epoch}/{epochs}] Step [{step + 1}/{len(train_loader)}] - Batch Loss: {loss.item():.4f}")
+                sys.stdout.flush()
 
         scheduler.step()
         train_loss = running_loss / max(1, total_seen)
