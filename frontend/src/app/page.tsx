@@ -11,7 +11,7 @@ import { RobustnessPanel } from "@/components/RobustnessPanel";
 import { MetadataPanel } from "@/components/MetadataPanel";
 import { ExplanationCard } from "@/components/ExplanationCard";
 import { PredictionResponse } from "@/types/prediction";
-import { Play, RotateCcw, AlertCircle, Sparkles, Shield } from "lucide-react";
+import { RotateCcw, AlertCircle } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -85,30 +85,26 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090d16] text-slate-100 selection:bg-indigo-500/30">
+    <div className="min-h-screen flex flex-col bg-[#0b0f17] text-slate-100">
       <Header apiBaseUrl={API_BASE_URL} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Title Hero */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Landing Page: Functional Forensic Workbench Heading */}
         {!prediction && (
-          <div className="text-center max-w-2xl mx-auto space-y-3 pt-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>SIH 2026 Production Authenticity Intelligence</span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-              Telling Real From Synthetic Media
+          <div className="max-w-2xl mx-auto text-left space-y-1 pt-2 pb-1">
+            <h1 className="text-xl font-bold text-white tracking-tight">
+              Image Authenticity Analysis
             </h1>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Dual-branch evidence fusion combining spatial ConvNeXt-Tiny feature attribution,
-              2D Fourier spectral harmonics, post-hoc probability calibration, and transformation stability.
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Multimodal forensic evaluation combining ConvNeXt-Tiny spatial feature attribution,
+              2D Fourier spectral residuals, and perturbation stability.
             </p>
           </div>
         )}
 
         {/* Ingestion & Upload Section */}
         {!prediction && (
-          <div className="max-w-2xl mx-auto space-y-4">
+          <div className="max-w-2xl mx-auto space-y-3">
             <Dropzone
               onFileSelected={handleFileSelected}
               isLoading={isLoading}
@@ -117,21 +113,20 @@ export default function HomePage() {
             />
 
             {selectedFile && !isLoading && (
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-1">
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition-colors"
                 >
                   Clear
                 </button>
                 <button
                   type="button"
                   onClick={handleRunAnalysis}
-                  className="px-5 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:opacity-95 text-white shadow-lg shadow-indigo-500/25 flex items-center gap-2 transition-all active:scale-[0.98]"
+                  className="px-4 py-1.5 text-xs font-semibold rounded bg-slate-100 hover:bg-white text-slate-950 transition-colors flex items-center gap-1.5"
                 >
-                  <Play className="w-4 h-4 fill-white" />
-                  Evaluate Authenticity
+                  Analyze image
                 </button>
               </div>
             )}
@@ -140,47 +135,48 @@ export default function HomePage() {
 
         {/* Loading Progress State */}
         {isLoading && (
-          <div className="py-8">
+          <div className="py-6">
             <AnalysisProgress />
           </div>
         )}
 
         {/* Error Alert */}
         {errorMsg && (
-          <div className="max-w-2xl mx-auto p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-3 shadow-lg">
-            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+          <div className="max-w-2xl mx-auto p-3.5 rounded border border-rose-900/60 bg-rose-950/20 text-rose-300 text-xs flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold">Evaluation Notice: </span>
+              <span className="font-semibold text-rose-200">Analysis Error: </span>
               <span>{errorMsg}</span>
             </div>
           </div>
         )}
 
-        {/* Results Presentation */}
+        {/* Results Presentation (Forensic Report Dossier) */}
         {prediction && (
-          <div className="space-y-6 animate-fadeIn">
-            {/* Action Bar */}
-            <div className="flex items-center justify-between">
+          <div className="space-y-5 animate-fadeIn">
+            {/* Top Toolbar */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2 text-xs text-slate-400">
-                <Shield className="w-4 h-4 text-indigo-400" />
-                <span>SignalScope Analysis Dossier</span>
-                <span className="text-slate-600">•</span>
-                <span className="font-mono text-slate-300">Schema v{prediction.schema_version}</span>
+                <span className="font-semibold text-slate-200 uppercase tracking-wider text-[11px]">
+                  Forensic Dossier
+                </span>
+                <span className="text-slate-600">/</span>
+                <span className="font-mono text-slate-400">Schema v{prediction.schema_version}</span>
               </div>
               <button
                 type="button"
                 onClick={handleClear}
-                className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-colors shadow-sm"
+                className="px-3 py-1 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5 transition-colors"
               >
-                <RotateCcw className="w-3.5 h-3.5" /> Analyze Another Image
+                <RotateCcw className="w-3 h-3" /> Analyze another image
               </button>
             </div>
 
-            {/* Top Verdict Card */}
+            {/* Verdict Header */}
             <VerdictCard prediction={prediction} />
 
-            {/* Evidence Grid: Spatial & Spectral */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Evidence Section 1: Spatial Attribution & Frequency Spectrum */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <SpatialHeatmapViewer
                 spatial={prediction.evidence.spatial}
                 originalPreview={previewUrl}
@@ -188,8 +184,8 @@ export default function HomePage() {
               <SpectralViewer spectral={prediction.evidence.spectral} />
             </div>
 
-            {/* Evidence Grid: Robustness & Metadata */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Evidence Section 2: Perturbation Robustness & Metadata Provenance */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <RobustnessPanel
                 robustness={prediction.evidence.robustness}
                 operatingThreshold={0.50}
@@ -197,17 +193,16 @@ export default function HomePage() {
               <MetadataPanel metadata={prediction.evidence.metadata} />
             </div>
 
-            {/* Explanation and Disclaimer */}
+            {/* Evidence Section 3: Explanation Finding & Disclaimer */}
             <ExplanationCard prediction={prediction} />
           </div>
         )}
       </main>
 
-      {/* Minimal Footer */}
-      <footer className="border-t border-slate-900/80 bg-slate-950 py-6 text-center text-xs text-slate-500">
+      {/* Forensic Footer */}
+      <footer className="border-t border-slate-800/80 bg-[#0d1322] py-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4">
-          SignalScope — Smart India Hackathon (SIH) 2026 Internal Hackathon.
-          Evaluations are probabilistic likelihood assessments based on statistical evidence, not causal proof.
+          SignalScope Forensic Workbench — Evaluations represent statistical likelihood estimates and do not constitute absolute physical proof.
         </div>
       </footer>
     </div>
