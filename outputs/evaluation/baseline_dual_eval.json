@@ -1,0 +1,233 @@
+{
+  "checkpoint": "checkpoints\\baseline_convnext\\best_model.pt",
+  "model_architecture": "convnext_tiny",
+  "evaluated_at": "2026-09-13T12:21:43",
+  "local_validation": {
+    "domain": "LOCAL VALIDATION",
+    "sample_count": 15000,
+    "metrics_at_050": {
+      "roc_auc": 0.9992,
+      "macro_f1": 0.9908,
+      "accuracy": 0.9908,
+      "precision": 0.9898,
+      "recall": 0.9919,
+      "fpr": 0.0103,
+      "confusion_matrix": {
+        "tn": 7423,
+        "fp": 77,
+        "fn": 61,
+        "tp": 7439,
+        "matrix": [
+          [
+            7423,
+            77
+          ],
+          [
+            61,
+            7439
+          ]
+        ]
+      }
+    },
+    "optimal_threshold_metrics": {
+      "optimal_threshold": 0.4219,
+      "youden_j": 0.9819,
+      "roc_auc": 0.9992,
+      "macro_f1": 0.9909,
+      "accuracy": 0.9909,
+      "fpr": 0.0105,
+      "confusion_matrix": {
+        "tn": 7421,
+        "fp": 79,
+        "fn": 57,
+        "tp": 7443,
+        "matrix": [
+          [
+            7421,
+            79
+          ],
+          [
+            57,
+            7443
+          ]
+        ]
+      }
+    },
+    "calibration": {
+      "brier_score": 0.0079,
+      "ece": 0.0063,
+      "mce": 0.2687
+    },
+    "generator_breakdown": {
+      "real": {
+        "sample_count": 7500,
+        "accuracy_at_050": 0.9897,
+        "mean_predicted_prob": 0.0118
+      },
+      "synthetic": {
+        "sample_count": 7500,
+        "accuracy_at_050": 0.9919,
+        "mean_predicted_prob": 0.9908
+      }
+    }
+  },
+  "new_data_validation": {
+    "domain": "NEW-DATA VALIDATION",
+    "sample_count": 1118,
+    "metrics_at_050": {
+      "roc_auc": 0.5933,
+      "macro_f1": 0.4296,
+      "accuracy": 0.5313,
+      "precision": 0.517,
+      "recall": 0.9535,
+      "fpr": 0.8909,
+      "confusion_matrix": {
+        "tn": 61,
+        "fp": 498,
+        "fn": 26,
+        "tp": 533,
+        "matrix": [
+          [
+            61,
+            498
+          ],
+          [
+            26,
+            533
+          ]
+        ]
+      }
+    },
+    "optimal_threshold_metrics": {
+      "optimal_threshold": 0.99,
+      "youden_j": 0.1843,
+      "roc_auc": 0.5933,
+      "macro_f1": 0.534,
+      "accuracy": 0.5689,
+      "fpr": 0.7048,
+      "confusion_matrix": {
+        "tn": 165,
+        "fp": 394,
+        "fn": 88,
+        "tp": 471,
+        "matrix": [
+          [
+            165,
+            394
+          ],
+          [
+            88,
+            471
+          ]
+        ]
+      }
+    },
+    "calibration": {
+      "brier_score": 0.4497,
+      "ece": 0.449,
+      "mce": 0.6407
+    },
+    "generator_breakdown": {
+      "fast-sdxl": {
+        "sample_count": 31,
+        "accuracy_at_050": 1.0,
+        "mean_predicted_prob": 0.9999
+      },
+      "firefly_image5": {
+        "sample_count": 17,
+        "accuracy_at_050": 1.0,
+        "mean_predicted_prob": 0.9996
+      },
+      "flux-2": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.9677,
+        "mean_predicted_prob": 0.9654
+      },
+      "flux-2-max": {
+        "sample_count": 23,
+        "accuracy_at_050": 1.0,
+        "mean_predicted_prob": 0.9911
+      },
+      "flux-2-pro": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.9355,
+        "mean_predicted_prob": 0.9304
+      },
+      "flux-dev": {
+        "sample_count": 23,
+        "accuracy_at_050": 1.0,
+        "mean_predicted_prob": 0.9757
+      },
+      "flux-pro-v1.1": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.871,
+        "mean_predicted_prob": 0.8792
+      },
+      "gemini-25-flash-image": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.9355,
+        "mean_predicted_prob": 0.9379
+      },
+      "gemini-3-pro-image-preview": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.9032,
+        "mean_predicted_prob": 0.9135
+      },
+      "gpt-image-1": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.9677,
+        "mean_predicted_prob": 0.9469
+      },
+      "gpt-image-1.5": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.9355,
+        "mean_predicted_prob": 0.9324
+      },
+      "hidream-i1-dev": {
+        "sample_count": 31,
+        "accuracy_at_050": 1.0,
+        "mean_predicted_prob": 0.9924
+      },
+      "ideogram-v3": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.9355,
+        "mean_predicted_prob": 0.9415
+      },
+      "imagen4": {
+        "sample_count": 31,
+        "accuracy_at_050": 1.0,
+        "mean_predicted_prob": 0.994
+      },
+      "midjourney_v7": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.871,
+        "mean_predicted_prob": 0.858
+      },
+      "real": {
+        "sample_count": 559,
+        "accuracy_at_050": 0.1091,
+        "mean_predicted_prob": 0.8883
+      },
+      "reve": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.9677,
+        "mean_predicted_prob": 0.9529
+      },
+      "seedreamv4.5": {
+        "sample_count": 31,
+        "accuracy_at_050": 1.0,
+        "mean_predicted_prob": 0.9967
+      },
+      "stable-diffusion-v35-medium": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.9032,
+        "mean_predicted_prob": 0.9063
+      },
+      "z-image-turbo": {
+        "sample_count": 31,
+        "accuracy_at_050": 0.9677,
+        "mean_predicted_prob": 0.9495
+      }
+    }
+  }
+}
