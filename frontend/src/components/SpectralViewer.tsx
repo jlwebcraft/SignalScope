@@ -13,75 +13,90 @@ export const SpectralViewer: React.FC<SpectralViewerProps> = ({ spectral }) => {
   const isElevated = hfRatio != null && hfRatio > 0.40;
 
   return (
-    <div className="forensic-panel flex flex-col justify-between p-4 space-y-3.5">
-      {/* Panel Header */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-        <div>
-          <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-            2. Frequency Evidence (2D FFT)
+    <section className="space-y-4 pt-4 border-t border-[#e5e2d9]">
+      {/* Section Header */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between border-b border-[#e5e2d9] pb-2 gap-2">
+        <div className="flex items-baseline space-x-3">
+          <span className="text-[10px] font-mono tracking-[0.2em] text-[#9a3412] uppercase font-semibold">
+            02
+          </span>
+          <h3 className="text-lg font-editorial font-semibold text-[#121316]">
+            Frequency Domain Evidence (2D FFT)
           </h3>
-          <p className="text-[11px] font-mono text-slate-500 mt-0.5">
-            {spectral.representation || "Centered 2D FFT Log-Magnitude"}
+        </div>
+
+        <div className="text-xs font-mono text-[#606570]">
+          {spectral.representation || "Centered 2D Fast Fourier Transform"}
+        </div>
+      </div>
+
+      {/* Analytical Layout: Spectrum Image + Quantitative Metric */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center pt-2">
+        {/* Left: 2D FFT Spectrum Display */}
+        <div className="space-y-2">
+          <div className="text-[11px] font-mono uppercase tracking-wider text-[#606570] flex justify-between">
+            <span>Exhibit C · Centered 2D Fourier Magnitude</span>
+            <span className="text-[#8c8a82]">Log-Scale Energy</span>
+          </div>
+          <div className="w-full h-64 bg-[#121316] border border-[#e5e2d9] p-2 flex items-center justify-center overflow-hidden">
+            {spectral.spectrum ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={spectral.spectrum}
+                alt="2D FFT Spectrum"
+                className="w-full h-full object-contain pixelated"
+              />
+            ) : (
+              <span className="text-xs font-mono text-[#8c8a82]">Spectral representation unavailable</span>
+            )}
+          </div>
+          <p className="text-[11px] text-[#8c8a82] font-mono">
+            DC component centered; radial distance represents spatial frequency.
           </p>
         </div>
 
-        {hfPct && (
-          <div className="text-right">
-            <span className="text-[10px] font-mono text-slate-500 uppercase">
-              HF Energy Ratio
-            </span>
-            <div className={`text-xs font-mono font-semibold ${isElevated ? "text-rose-400" : "text-emerald-400"}`}>
-              {hfPct}% ({isElevated ? "Elevated" : "Natural Decay"})
+        {/* Right: Quantitative Energy Metric & Analytical Interpretation */}
+        <div className="space-y-4 bg-[#f3f1ea] border border-[#e5e2d9] p-5 font-mono">
+          <div className="space-y-1">
+            <div className="text-[10px] uppercase tracking-wider text-[#8c8a82]">
+              High-Frequency Radial Energy
+            </div>
+            <div className="flex items-baseline space-x-2">
+              <span className={`text-3xl font-bold tracking-tight ${isElevated ? "text-[#991b1b]" : "text-[#166534]"}`}>
+                {hfPct != null ? `${hfPct}%` : "—"}
+              </span>
+              <span className="text-xs text-[#606570]">
+                ({isElevated ? "Elevated Grid Residual" : "Natural Power-Law Decay"})
+              </span>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Spectrum Viewport */}
-      <div className="flex flex-col items-center">
-        <div className="relative w-56 h-56 rounded border border-slate-700/80 bg-slate-950 flex items-center justify-center overflow-hidden">
-          {spectral.spectrum ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={spectral.spectrum}
-              alt="2D FFT Spectrum"
-              className="w-full h-full object-contain pixelated"
-            />
-          ) : (
-            <div className="p-4 text-center text-xs text-slate-500 font-mono">
-              Spectral representation computed during inference
+          {/* Clean Distribution Gauge */}
+          {hfRatio != null && (
+            <div className="space-y-1.5 pt-1">
+              <div className="w-full h-1.5 bg-[#dcd9ce] overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    isElevated ? "bg-[#991b1b]" : "bg-[#166534]"
+                  }`}
+                  style={{ width: `${Math.min(100, Math.max(0, hfRatio * 100))}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-[#8c8a82]">
+                <span>Natural Continuous Decay (&lt;40%)</span>
+                <span>Generative Periodic Grid (&gt;40%)</span>
+              </div>
             </div>
           )}
-        </div>
 
-        {/* High Frequency Distribution Metric */}
-        {hfRatio != null && (
-          <div className="w-full max-w-xs mt-3 space-y-1">
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-              <span>High-Frequency Radial Energy</span>
-              <span className="text-slate-200">{hfPct}%</span>
-            </div>
-            <div className="w-full h-1.5 rounded bg-slate-800 overflow-hidden">
-              <div
-                className={`h-full transition-all duration-300 ${
-                  isElevated ? "bg-rose-500" : "bg-emerald-500"
-                }`}
-                style={{ width: `${Math.min(100, Math.max(0, hfRatio * 100))}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[10px] font-mono text-slate-500">
-              <span>Expected 1/f Decay (&lt;40%)</span>
-              <span>Periodic Grid Residual (&gt;40%)</span>
-            </div>
+          {/* Scientific Interpretation */}
+          <div className="text-xs text-[#606570] font-sans leading-relaxed pt-2 border-t border-[#e5e2d9]">
+            <strong className="text-[#121316] font-mono uppercase text-[10px] tracking-wider">Spectral Scope: </strong>
+            Natural optical camera sensors exhibit smooth power-law falloff across radial frequencies. Generative upsamplers
+            frequently introduce periodic lattice artifacts. This spectral metric serves as supporting context only.
           </div>
-        )}
+        </div>
       </div>
-
-      {/* Scientific Context */}
-      <div className="p-2.5 rounded bg-slate-900/50 border border-slate-800/80 text-[11px] text-slate-400 leading-relaxed">
-        <span className="font-semibold text-slate-300">Spectral Scope: </span>
-        Natural camera sensors exhibit continuous radial decay. Convolutional upsamplers and latent decoders often leave high-frequency grid harmonics. This metric provides supporting context only.
-      </div>
-    </div>
+    </section>
   );
 };

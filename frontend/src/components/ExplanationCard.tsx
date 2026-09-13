@@ -11,43 +11,70 @@ export const ExplanationCard: React.FC<ExplanationCardProps> = ({ prediction }) 
   const { explanation, disclaimer, verdict, evidence } = prediction;
 
   const getHighlights = () => {
-    const items: string[] = [];
+    const items: { label: string; text: string }[] = [];
 
     // Spatial
     if (evidence.spatial.available) {
       if (verdict === "likely_ai_generated") {
-        items.push("Spatial feature attribution identified localized structural anomalies in highlighted areas.");
+        items.push({
+          label: "Spatial Attribution",
+          text: "Spatial activation analysis observed localized structural anomalies in highlighted image regions.",
+        });
       } else {
-        items.push("Spatial feature attribution exhibits natural continuous gradients across the image plane.");
+        items.push({
+          label: "Spatial Attribution",
+          text: "Spatial feature gradients exhibit continuous natural transitions consistent with optical lens capture.",
+        });
       }
     }
 
     // Spectral
     if (evidence.spectral.available) {
       if (evidence.spectral.high_frequency_energy_ratio && evidence.spectral.high_frequency_energy_ratio > 0.40) {
-        items.push("2D Fourier spectral analysis identified elevated high-frequency periodic residuals typical of generative upsampling.");
+        items.push({
+          label: "Spectral Harmonics",
+          text: "2D Fourier analysis observed elevated high-frequency periodic residuals typical of generative upsampling lattices.",
+        });
       } else {
-        items.push("2D Fourier spectral analysis observed standard continuous power-law decay characteristic of physical camera sensors.");
+        items.push({
+          label: "Spectral Harmonics",
+          text: "2D Fourier analysis conformed to power-law energy decay typical of natural physical scenes.",
+        });
       }
     }
 
     // Robustness
     if (evidence.robustness.available) {
       if (evidence.robustness.stability_score >= 0.80) {
-        items.push("Prediction stability remained high across controlled compression and downscaling transformations.");
+        items.push({
+          label: "Transformation Invariance",
+          text: "Model predictions exhibited high stability across controlled compression and downscaling transformations.",
+        });
       } else {
-        items.push("Prediction exhibited sensitivity or decision drift under tested perturbation probes.");
+        items.push({
+          label: "Transformation Invariance",
+          text: "Prediction demonstrated numerical sensitivity or categorical shifts under tested perturbation probes.",
+        });
       }
     }
 
     // Provenance
     if (evidence.metadata.available) {
       if (evidence.metadata.c2pa_present) {
-        items.push("C2PA content credentials verified cryptographic provenance manifest.");
+        items.push({
+          label: "Provenance Claims",
+          text: "Cryptographic C2PA manifest claims are attached and verified.",
+        });
       } else if (evidence.metadata.has_exif) {
-        items.push("Standard camera EXIF headers are recorded.");
+        items.push({
+          label: "Provenance Claims",
+          text: "Standard camera EXIF headers are recorded.",
+        });
       } else {
-        items.push("No EXIF or C2PA provenance headers present (typical for web distribution).");
+        items.push({
+          label: "Provenance Claims",
+          text: "EXIF headers not recorded; typical for web distribution and re-encoding.",
+        });
       }
     }
 
@@ -57,47 +84,68 @@ export const ExplanationCard: React.FC<ExplanationCardProps> = ({ prediction }) 
   const highlights = getHighlights();
 
   return (
-    <div className="forensic-panel p-5 space-y-4">
-      {/* Header */}
-      <div className="border-b border-slate-800 pb-2.5">
-        <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-          5. Forensic Synthesis & Evidence Summary
+    <section className="space-y-6 pt-4 border-t border-[#e5e2d9]">
+      {/* Section Header */}
+      <div className="flex items-baseline space-x-3 border-b border-[#e5e2d9] pb-2">
+        <span className="text-[10px] font-mono tracking-[0.2em] text-[#9a3412] uppercase font-semibold">
+          05
+        </span>
+        <h3 className="text-lg font-editorial font-semibold text-[#121316]">
+          Forensic Synthesis & Methodology
         </h3>
-        <p className="text-[11px] font-mono text-slate-500 mt-0.5">
-          Deterministic summary grounded in quantitative feature observations
-        </p>
       </div>
 
-      {/* Synthesis Narrative */}
-      <div className="p-3.5 rounded bg-slate-900/60 border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans">
-        <div className="font-semibold text-slate-100 mb-1 uppercase text-[10px] font-mono tracking-wider">
-          Forensic Finding:
+      <div className="space-y-6 text-xs text-[#2a2d34]">
+        {/* Finding Paragraph */}
+        <div className="space-y-1.5">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[#606570] font-semibold">
+            Finding
+          </span>
+          <p className="text-sm leading-relaxed text-[#121316] font-sans">
+            {explanation}
+          </p>
         </div>
-        <p>{explanation}</p>
-      </div>
 
-      {/* Evidence Factors */}
-      {highlights.length > 0 && (
-        <div className="space-y-2">
-          <div className="text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider">
-            Evidence Supporting This Finding:
+        {/* Evidence Factor Breakdown */}
+        {highlights.length > 0 && (
+          <div className="space-y-2 pt-2 border-t border-[#eeece5]">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#606570] font-semibold">
+              Evidence Supporting Finding
+            </span>
+            <div className="space-y-2 pt-1 font-mono">
+              {highlights.map((item, idx) => (
+                <div key={idx} className="flex items-start space-x-3">
+                  <span className="text-[#9a3412] font-bold text-[11px] shrink-0">
+                    0{idx + 1}
+                  </span>
+                  <div className="text-xs text-[#2a2d34]">
+                    <strong className="text-[#121316] uppercase text-[10px] tracking-wider">{item.label}: </strong>
+                    <span className="font-sans text-[#2a2d34]">{item.text}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <ul className="space-y-1.5 font-mono text-xs text-slate-300">
-            {highlights.map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-slate-500 font-bold shrink-0">—</span>
-                <span className="leading-relaxed">{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        )}
 
-      {/* Mandatory Disclaimer */}
-      <div className="p-2.5 rounded bg-slate-950/60 border border-slate-800/80 text-[11px] text-slate-500 leading-relaxed">
-        <span className="font-semibold text-slate-400">Mandatory Forensic Disclaimer: </span>
-        {disclaimer}
+        {/* Limitations */}
+        <div className="space-y-1 pt-2 border-t border-[#eeece5]">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[#606570] font-semibold">
+            Methodological Limitations
+          </span>
+          <p className="text-xs text-[#606570] font-sans leading-relaxed">
+            Evaluations are statistical likelihood estimates derived from deep ConvNeXt representations and Fourier spectra.
+            Novel generative architectures, unseen post-processing filters, or intentional adversarial perturbations can
+            affect classification stability.
+          </p>
+        </div>
+
+        {/* Mandatory Disclaimer */}
+        <div className="p-3 bg-[#f3f1ea] border border-[#e5e2d9] text-[11px] text-[#606570] leading-relaxed">
+          <strong className="text-[#121316] font-mono uppercase text-[10px] tracking-wider">Mandatory Forensic Disclaimer: </strong>
+          {disclaimer}
+        </div>
       </div>
-    </div>
+    </section>
   );
 };

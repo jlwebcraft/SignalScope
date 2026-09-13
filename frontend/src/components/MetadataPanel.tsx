@@ -14,75 +14,79 @@ export const MetadataPanel: React.FC<MetadataPanelProps> = ({ metadata }) => {
       : "Unavailable (No EXIF)";
 
   return (
-    <div className="forensic-panel flex flex-col justify-between p-4 space-y-3.5">
-      {/* Panel Header */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-        <div>
-          <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-            4. Provenance & Metadata Inspection
+    <section className="space-y-4 pt-4 border-t border-[#e5e2d9]">
+      {/* Section Header */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between border-b border-[#e5e2d9] pb-2 gap-2">
+        <div className="flex items-baseline space-x-3">
+          <span className="text-[10px] font-mono tracking-[0.2em] text-[#9a3412] uppercase font-semibold">
+            04
+          </span>
+          <h3 className="text-lg font-editorial font-semibold text-[#121316]">
+            Provenance & Metadata Inspection
           </h3>
-          <p className="text-[11px] font-mono text-slate-500 mt-0.5">
-            EXIF Structure · C2PA Manifest Verification
-          </p>
         </div>
 
         <span
-          className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium border ${
+          className={`px-2 py-0.5 text-[11px] font-mono font-medium border ${
             metadata.c2pa_present
-              ? "text-emerald-400 border-emerald-800 bg-emerald-950/40"
-              : "text-slate-400 border-slate-700 bg-slate-900/60"
+              ? "text-[#166534] bg-[#f0fdf4] border-[#bbf7d0]"
+              : "text-[#606570] bg-[#f3f1ea] border-[#e5e2d9]"
           }`}
         >
-          {metadata.c2pa_present ? "C2PA Verified" : "No C2PA Manifest"}
+          {metadata.c2pa_present ? "C2PA Manifest Attached" : "No C2PA Manifest"}
         </span>
       </div>
 
-      {/* Forensic Property Sheet */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
-        <div className="p-2.5 rounded bg-slate-900/60 border border-slate-800 space-y-1">
-          <div className="text-[10px] text-slate-500 uppercase">EXIF Headers</div>
-          <div className="text-slate-200 font-medium">
-            {metadata.has_exif ? "Structures Detected" : "Not Present / Stripped"}
+      {/* Forensic Evidence Property Sheet */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+        <div className="p-3 bg-[#f3f1ea] border border-[#e5e2d9] space-y-1">
+          <div className="text-[10px] text-[#8c8a82] uppercase">EXIF Headers</div>
+          <div className="font-semibold text-[#121316]">
+            {metadata.has_exif ? "Structure Present" : "Not Present / Stripped"}
           </div>
-          <p className="text-[10px] text-slate-500 font-sans">
-            {metadata.has_exif ? "Standard camera metadata present." : "Typical for web & social platforms."}
+          <p className="text-[11px] text-[#606570] font-sans">
+            {metadata.has_exif ? "Camera exposure tags recorded." : "Typical for web distribution and re-uploads."}
           </p>
         </div>
 
-        <div className="p-2.5 rounded bg-slate-900/60 border border-slate-800 space-y-1">
-          <div className="text-[10px] text-slate-500 uppercase">Content Credentials</div>
-          <div className="text-slate-200 font-medium">
-            {metadata.c2pa_present ? "C2PA Claim Attached" : "Not Detected"}
+        <div className="p-3 bg-[#f3f1ea] border border-[#e5e2d9] space-y-1">
+          <div className="text-[10px] text-[#8c8a82] uppercase">C2PA Credentials</div>
+          <div className="font-semibold text-[#121316]">
+            {metadata.c2pa_present ? "Cryptographic Manifest Attached" : "Not Detected"}
           </div>
-          <p className="text-[10px] text-slate-500 font-sans">
-            {metadata.c2pa_present ? "Cryptographic provenance verified." : "No signed provenance block."}
+          <p className="text-[11px] text-[#606570] font-sans">
+            {metadata.c2pa_present ? "Cryptographic chain verified." : "No signed provenance block attached."}
           </p>
         </div>
 
-        <div className="p-2.5 rounded bg-slate-900/60 border border-slate-800 space-y-1">
-          <div className="text-[10px] text-slate-500 uppercase">Camera Hardware</div>
-          <div className="text-slate-200 font-medium truncate">
+        <div className="p-3 bg-[#f3f1ea] border border-[#e5e2d9] space-y-1">
+          <div className="text-[10px] text-[#8c8a82] uppercase">Camera Hardware</div>
+          <div className="font-semibold text-[#121316] truncate">
             {cameraDisplay}
           </div>
-          <p className="text-[10px] text-slate-500 font-sans">Hardware device recording.</p>
+          <p className="text-[11px] text-[#606570] font-sans">
+            Hardware capture identifier.
+          </p>
         </div>
 
-        <div className="p-2.5 rounded bg-slate-900/60 border border-slate-800 space-y-1">
-          <div className="text-[10px] text-slate-500 uppercase">Software Signature</div>
-          <div className="text-slate-200 font-medium truncate">
+        <div className="p-3 bg-[#f3f1ea] border border-[#e5e2d9] space-y-1">
+          <div className="text-[10px] text-[#8c8a82] uppercase">Software Tag</div>
+          <div className="font-semibold text-[#121316] truncate">
             {metadata.software || "Unavailable"}
           </div>
-          <p className="text-[10px] text-slate-500 font-sans">Generator or editing tool tag.</p>
+          <p className="text-[11px] text-[#606570] font-sans">
+            Generator or processing tool string.
+          </p>
         </div>
       </div>
 
       {/* Identified Anomalies */}
       {metadata.anomalies && metadata.anomalies.length > 0 && (
-        <div className="p-2.5 rounded bg-amber-950/25 border border-amber-800/60 text-amber-200 text-xs space-y-1">
-          <div className="font-semibold text-[11px] text-amber-300 uppercase">
+        <div className="p-3 border border-[#fde68a] bg-[#fffbeb] text-[#92400e] text-xs space-y-1">
+          <div className="font-mono text-[11px] font-bold uppercase tracking-wider">
             Identified Header Anomalies:
           </div>
-          <ul className="list-disc list-inside space-y-0.5 text-[11px] text-amber-300/80 font-mono">
+          <ul className="list-disc list-inside space-y-0.5 font-mono text-[11px] text-[#92400e]/90">
             {metadata.anomalies.map((anom, idx) => (
               <li key={idx}>{anom}</li>
             ))}
@@ -90,11 +94,12 @@ export const MetadataPanel: React.FC<MetadataPanelProps> = ({ metadata }) => {
         </div>
       )}
 
-      {/* Provenance Scope Guardrail */}
-      <div className="p-2.5 rounded bg-slate-900/50 border border-slate-800/80 text-[11px] text-slate-400 leading-relaxed font-sans">
-        <span className="font-semibold text-slate-300">Provenance Scope: </span>
-        Metadata absence is routine across modern web services and does not indicate synthetic origin. It serves as supporting forensic context only.
+      {/* Interpretation & Scope Guardrail */}
+      <div className="text-xs text-[#606570] font-sans leading-relaxed pt-1">
+        <strong className="text-[#121316] font-mono uppercase text-[10px] tracking-wider">Provenance Interpretation: </strong>
+        Metadata absence is standard for modern web platforms and social networks and does not imply synthetic origin.
+        Provenance metadata serves as supporting contextual evidence only.
       </div>
-    </div>
+    </section>
   );
 };
