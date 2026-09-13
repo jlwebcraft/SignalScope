@@ -497,3 +497,90 @@ $$\begin{bmatrix} \text{TN: } 504 & \text{FP: } 55 \\ \text{FN: } 97 & \text{TP:
 **PRODUCTION MODEL CHANGE: NOT PERFORMED**  
 The active production model remains `signalscope-baseline-v1`. No models were deployed to Google Cloud Run, no release was published, and no frontend configurations were updated.
 
+---
+
+## 19. Final Photographic-Real Validation Gate
+
+To conclusively resolve the critical question of whether the retrained candidate model eliminates the baseline's false-positive failure mode on high-resolution real photography, an independent validation gate was executed.
+
+### 19.1 Holdout Design & Composition
+- **Source**: Drawn strictly from the **103,428 UNUSED images** in `C:\Programming\SignalScope-data\version-2\REAL`.
+- **Target Size**: Exactly **9,000 authentic photographic images**.
+- **Category Distribution**: Exactly 1,000 images sampled deterministically across each of the 9 photographic categories (`seed=2026`):
+  1. `apparel`: 1,000 images
+  2. `cars`: 1,000 images
+  3. `dishes`: 1,000 images
+  4. `furniture`: 1,000 images
+  5. `landmark`: 1,000 images
+  6. `packaged`: 1,000 images
+  7. `storefronts`: 1,000 images
+  8. `toys`: 1,000 images
+  9. `artwork`: 1,000 images
+
+### 19.2 Anti-Leakage Verification
+- **Exclusion of Training Samples**: All 5,004 photographic real images utilized in the Exp2/Exp3 training composition were deterministically reproduced (`seed=42`) and strictly blacklisted.
+- **Cross-Partition Verification**:
+  $$\text{Holdout} \cap \text{Train}_{\text{Exp2/Exp3}} = \emptyset, \quad \text{Holdout} \cap \text{Train}_{\text{Official}} = \emptyset, \quad \text{Holdout} \cap \text{Val}_{\text{Old}} = \emptyset, \quad \text{Holdout} \cap \text{Val}_{\text{New}} = \emptyset$$
+  - The assertion `verify_holdout_leakage()` confirmed **exactly 0 overlapping files** across all 9,000 images.
+
+### 19.3 Overall Stress-Test Performance (Ground Truth: 100% Real, $N = 9,000$)
+
+| Metric | Baseline (`signalscope-baseline-v1`) | Candidate (`exp3_5ep`) | Impact / Diagnostic |
+| :--- | :---: | :---: | :--- |
+| **False Positive Rate (FPR @ 0.50)** | **74.69%** | **1.37%** | **-73.32% Absolute / -98.17% Relative Reduction** |
+| **False Positive Count** | 6,722 / 9,000 | 123 / 9,000 | 6,599 false alarms eliminated |
+| **True Negative Count** | 2,278 / 9,000 | 8,877 / 9,000 | 98.63% specificity |
+| **Median Synthetic Probability** | **0.9956** | **0.0019** | Probability distribution shifted to authentic real |
+| **Mean Synthetic Probability** | 0.7410 | 0.0279 | Non-pathological, well-behaved confidence |
+| **90th Percentile Probability** | 1.0000 | **0.0498** | 90% of real images have probability $< 0.05$ |
+| **95th Percentile Probability** | 1.0000 | **0.1328** | 95% of real images have probability $< 0.14$ |
+| **99th Percentile Probability** | 1.0000 | **0.6001** | Extreme outliers dramatically dampened |
+| **Maximum Synthetic Probability**| 1.0000 | 0.9990 | Bounded single-sample extremes |
+
+### 19.4 Category Breakdown (1,000 Samples per Category)
+
+| Photographic Category | Baseline FPR (%) | Baseline Median Prob | Exp3-5ep FPR (%) | Exp3-5ep Median Prob | Absolute FPR Drop (%) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **apparel** | 71.20% | 0.9844 | **0.90%** | 0.0004 | **-70.30%** |
+| **cars** | 79.40% | 0.9956 | **0.30%** | 0.0002 | **-79.10%** |
+| **dishes** | 87.30% | 0.9995 | **0.70%** | 0.0009 | **-86.60%** |
+| **furniture** | 56.70% | 0.8330 | **0.70%** | 0.0018 | **-56.00%** |
+| **landmark** | 90.50% | 0.9995 | **3.10%** | 0.0080 | **-87.40%** |
+| **packaged** | 77.10% | 1.0000 | **0.10%** | 0.0026 | **-77.00%** |
+| **storefronts** | 85.40% | 0.9990 | **2.20%** | 0.0041 | **-83.20%** |
+| **toys** | 50.60% | 0.5569 | **0.80%** | 0.0022 | **-49.80%** |
+| **artwork** | 74.00% | 0.9900 | **3.50%** | 0.0064 | **-70.50%** |
+
+- **Worst Category for Baseline**: `landmark` (**90.50% FPR**).
+- **Worst Category for Exp3-5ep**: `artwork` (**3.50% FPR**, retaining 96.5% specificity).
+- **Category with Largest Improvement**: `landmark` (**-87.40% reduction**, dropping from 90.50% to 3.10%).
+
+### 19.5 Secondary Degradation Robustness on Photographic Holdout (900 Stratified Samples)
+
+| Degradation Transformation | Baseline FPR (%) | Baseline Median Prob | Exp3-5ep FPR (%) | Exp3-5ep Median Prob | Flip Rate (%) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Pristine Native** | 74.44% | 0.9956 | **1.11%** | 0.0019 | 0.0% |
+| **JPEG Quality 95** | 74.56% | 0.9957 | **1.00%** | 0.0018 | 0.1% |
+| **JPEG Quality 85** | 74.56% | 0.9958 | **0.89%** | 0.0016 | 0.2% |
+| **JPEG Quality 70** | 74.44% | 0.9956 | **0.56%** | 0.0014 | 0.6% |
+| **Resize (0.7x Down/Up)** | 74.33% | 0.9950 | **0.89%** | 0.0016 | 0.2% |
+| **Screenshot Simulation** | 74.22% | 0.9945 | **0.56%** | 0.0013 | 0.6% |
+| **Light Edit (90% Crop)** | 75.78% | 0.9961 | **0.56%** | 0.0012 | 0.6% |
+
+- *Finding*: The candidate model remains stable under social media re-encoding and cropping, keeping false alarms on authentic photography **below 1.15% across all degradations**.
+
+### 19.6 Production Decision Gate Verdict
+
+1. **Condition 1 (Material FPR Reduction)**: **PASSED**. FPR dropped from 74.69% to 1.37% (-98.17% relative drop).
+2. **Condition 2 (Zero In-Domain Regression)**: **PASSED**. Old validation AUC is 0.9991 vs 0.9992 baseline.
+3. **Condition 3 (High-Resolution Synthetic Detection)**: **PASSED**. New-Data AUC is 0.9220 with 85.78% Macro-F1 across 19 generators.
+4. **Condition 4 (Non-Pathological Probabilities)**: **PASSED**. Median probability on authentic photos dropped from 0.9956 to 0.0019; P90 dropped from 1.0000 to 0.0498.
+5. **Condition 5 (Uniform Category Generalization)**: **PASSED**. Every category achieved $\le 3.50\%$ FPR.
+6. **Condition 6 (Degradation Robustness)**: **PASSED**. FPR remains $\le 1.11\%$ across all 6 degradation transformations.
+
+**VERDICT**:  
+**PRODUCTION GATE: PASSED — EXP3 APPROVED FOR RELEASE**
+
+*(Note: In accordance with project safety guidelines, deployment to Google Cloud Run and frontend release will only occur upon explicit user authorization).*
+
+

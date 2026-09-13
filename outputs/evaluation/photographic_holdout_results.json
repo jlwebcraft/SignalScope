@@ -1,0 +1,273 @@
+{
+  "benchmark_name": "independent_photographic_real_validation_gate",
+  "sample_count": 9000,
+  "categories": [
+    "apparel",
+    "cars",
+    "dishes",
+    "furniture",
+    "landmark",
+    "packaged",
+    "storefronts",
+    "toys",
+    "artwork"
+  ],
+  "leakage_verification": {
+    "status": "PASSED",
+    "excluded_training_paths_count": 5004,
+    "overlap_count": 0
+  },
+  "overall_results": {
+    "baseline": {
+      "false_positives": 6722,
+      "true_negatives": 2278,
+      "fpr": 0.7469,
+      "raw_stats": {
+        "mean": 0.741,
+        "std": 0.3951,
+        "min": 0.0,
+        "p25": 0.4744,
+        "median": 0.9956,
+        "p75": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "calibrated_stats": {
+        "mean": 0.741,
+        "std": 0.3951,
+        "min": 0.0,
+        "p25": 0.4744,
+        "median": 0.9956,
+        "p75": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "p99": 1.0,
+        "max": 1.0
+      }
+    },
+    "exp3_5ep": {
+      "false_positives": 123,
+      "true_negatives": 8877,
+      "fpr": 0.0137,
+      "raw_stats": {
+        "mean": 0.0279,
+        "std": 0.0998,
+        "min": 0.0,
+        "p25": 0.0004,
+        "median": 0.0019,
+        "p75": 0.0096,
+        "p90": 0.0498,
+        "p95": 0.1328,
+        "p99": 0.6001,
+        "max": 0.999
+      },
+      "calibrated_stats": {
+        "mean": 0.0279,
+        "std": 0.0998,
+        "min": 0.0,
+        "p25": 0.0004,
+        "median": 0.0019,
+        "p75": 0.0096,
+        "p90": 0.0496,
+        "p95": 0.1324,
+        "p99": 0.6002,
+        "max": 0.999
+      }
+    },
+    "comparison": {
+      "absolute_fpr_reduction": 0.7332,
+      "relative_fpr_reduction_pct": 98.17
+    }
+  },
+  "category_breakdown": {
+    "apparel": {
+      "samples": 1000,
+      "baseline_fp": 712,
+      "baseline_fpr": 0.712,
+      "baseline_median_prob": 0.9844,
+      "exp3_fp": 9,
+      "exp3_fpr": 0.009,
+      "exp3_median_prob": 0.0004,
+      "fpr_improvement": 0.703
+    },
+    "cars": {
+      "samples": 1000,
+      "baseline_fp": 794,
+      "baseline_fpr": 0.794,
+      "baseline_median_prob": 0.9956,
+      "exp3_fp": 3,
+      "exp3_fpr": 0.003,
+      "exp3_median_prob": 0.0002,
+      "fpr_improvement": 0.791
+    },
+    "dishes": {
+      "samples": 1000,
+      "baseline_fp": 873,
+      "baseline_fpr": 0.873,
+      "baseline_median_prob": 0.9995,
+      "exp3_fp": 7,
+      "exp3_fpr": 0.007,
+      "exp3_median_prob": 0.0009,
+      "fpr_improvement": 0.866
+    },
+    "furniture": {
+      "samples": 1000,
+      "baseline_fp": 567,
+      "baseline_fpr": 0.567,
+      "baseline_median_prob": 0.833,
+      "exp3_fp": 7,
+      "exp3_fpr": 0.007,
+      "exp3_median_prob": 0.0018,
+      "fpr_improvement": 0.56
+    },
+    "landmark": {
+      "samples": 1000,
+      "baseline_fp": 905,
+      "baseline_fpr": 0.905,
+      "baseline_median_prob": 0.9995,
+      "exp3_fp": 31,
+      "exp3_fpr": 0.031,
+      "exp3_median_prob": 0.008,
+      "fpr_improvement": 0.874
+    },
+    "packaged": {
+      "samples": 1000,
+      "baseline_fp": 771,
+      "baseline_fpr": 0.771,
+      "baseline_median_prob": 1.0,
+      "exp3_fp": 1,
+      "exp3_fpr": 0.001,
+      "exp3_median_prob": 0.0026,
+      "fpr_improvement": 0.77
+    },
+    "storefronts": {
+      "samples": 1000,
+      "baseline_fp": 854,
+      "baseline_fpr": 0.854,
+      "baseline_median_prob": 0.999,
+      "exp3_fp": 22,
+      "exp3_fpr": 0.022,
+      "exp3_median_prob": 0.0041,
+      "fpr_improvement": 0.832
+    },
+    "toys": {
+      "samples": 1000,
+      "baseline_fp": 506,
+      "baseline_fpr": 0.506,
+      "baseline_median_prob": 0.5569,
+      "exp3_fp": 8,
+      "exp3_fpr": 0.008,
+      "exp3_median_prob": 0.0022,
+      "fpr_improvement": 0.498
+    },
+    "artwork": {
+      "samples": 1000,
+      "baseline_fp": 740,
+      "baseline_fpr": 0.74,
+      "baseline_median_prob": 0.99,
+      "exp3_fp": 35,
+      "exp3_fpr": 0.035,
+      "exp3_median_prob": 0.0064,
+      "fpr_improvement": 0.705
+    }
+  },
+  "worst_category_baseline": "landmark",
+  "worst_category_exp3": "artwork",
+  "category_largest_improvement": "landmark",
+  "robustness_on_photographic_holdout": {
+    "baseline": {
+      "original": {
+        "fpr": 0.7444,
+        "median_prob": 0.9966,
+        "flip_rate": 0.0,
+        "drift": 0.0
+      },
+      "jpeg_95": {
+        "fpr": 0.7456,
+        "median_prob": 0.9966,
+        "flip_rate": 0.0011,
+        "drift": 0.0009
+      },
+      "jpeg_85": {
+        "fpr": 0.7456,
+        "median_prob": 0.9966,
+        "flip_rate": 0.0011,
+        "drift": 0.002
+      },
+      "jpeg_70": {
+        "fpr": 0.7444,
+        "median_prob": 0.9966,
+        "flip_rate": 0.0,
+        "drift": 0.0044
+      },
+      "resize": {
+        "fpr": 0.7433,
+        "median_prob": 0.9961,
+        "flip_rate": 0.0011,
+        "drift": 0.0078
+      },
+      "screenshot": {
+        "fpr": 0.7422,
+        "median_prob": 0.9956,
+        "flip_rate": 0.0022,
+        "drift": 0.012
+      },
+      "light_edit": {
+        "fpr": 0.7578,
+        "median_prob": 0.9966,
+        "flip_rate": 0.0689,
+        "drift": 0.0664
+      }
+    },
+    "exp3_5ep": {
+      "original": {
+        "fpr": 0.0111,
+        "median_prob": 0.0019,
+        "flip_rate": 0.0,
+        "drift": 0.0
+      },
+      "jpeg_95": {
+        "fpr": 0.01,
+        "median_prob": 0.0018,
+        "flip_rate": 0.0011,
+        "drift": 0.0014
+      },
+      "jpeg_85": {
+        "fpr": 0.0089,
+        "median_prob": 0.0016,
+        "flip_rate": 0.0022,
+        "drift": 0.0047
+      },
+      "jpeg_70": {
+        "fpr": 0.0056,
+        "median_prob": 0.0013,
+        "flip_rate": 0.0056,
+        "drift": 0.009
+      },
+      "resize": {
+        "fpr": 0.0089,
+        "median_prob": 0.0018,
+        "flip_rate": 0.0022,
+        "drift": 0.0033
+      },
+      "screenshot": {
+        "fpr": 0.0056,
+        "median_prob": 0.0014,
+        "flip_rate": 0.0056,
+        "drift": 0.0089
+      },
+      "light_edit": {
+        "fpr": 0.0056,
+        "median_prob": 0.0016,
+        "flip_rate": 0.0056,
+        "drift": 0.0097
+      }
+    }
+  },
+  "gate_decision": {
+    "passed": true,
+    "verdict": "PRODUCTION GATE: PASSED \u2014 EXP3 APPROVED FOR RELEASE"
+  }
+}
