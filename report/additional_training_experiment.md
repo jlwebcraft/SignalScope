@@ -2,9 +2,9 @@
 
 **Project**: SignalScope AI-Generated Image Forensics  
 **Date**: September 13, 2026  
-**Git Branch**: `feat/additional-training`  
+**Git Branch**: `feat/model-v2-release`  
 **Execution Environment**: Windows 11, PyTorch 2.6.0+cu124, NVIDIA GeForce RTX 3050 6GB Laptop GPU  
-**Production Checkpoint Status**: `signalscope-baseline-v1` (ConvNeXt-Tiny, SHA-256: `c2e7881e...`) remains live and unreplaced pending governance approval.  
+**Production Checkpoint Status**: `signalscope-v2` (ConvNeXt-Tiny, SHA-256: `47f6b2a19d6113d25028b1434d5c830a4521830621a44f76af43acd6be55178d`) approved for production release; `signalscope-baseline-v1` (`c2e7881e...`) archived for rollback.  
 **Held-Out Test Status**: `C:\Programming\SignalScope-data\test` remained **COMPLETELY UNTOUCHED, UNACCESSED, AND UNINSPECTED**.
 
 ---

@@ -32,7 +32,7 @@ SignalScope employs a decoupled client-server architecture designed for independ
                │   Inference Engine & Evidence Fusion  │
                │   - ConvNeXt-Tiny Spatial Classifier  │
                │   - Post-Hoc Temperature Scaler       │
-               │     (T = 0.99953)                     │
+               │     (T = 0.9986)                      │
                │   - Stage 3 Block 2 Grad-CAM Engine   │
                │   - 2D Fast Fourier Transform (FFT)   │
                │   - 4-Probe Authenticity Stability    │
@@ -42,9 +42,9 @@ SignalScope employs a decoupled client-server architecture designed for independ
                                   ▼
                ┌───────────────────────────────────────┐
                │     Model Checkpoint & Artifacts      │
-               │   - Local: checkpoints/baseline_...   │
-               │   - Remote: Hugging Face / GH Release │
-               │     (SHA-256 Verified, Local Cache)   │
+               │   - v2: signalscope-v2 (47f6b2a1...)  │
+               │   - Rollback: v1 (c2e7881e...)        │
+               │   - Remote: GitHub Release v2.0.0     │
                └───────────────────────────────────────┘
 ```
 
@@ -91,13 +91,13 @@ SignalScope employs a decoupled client-server architecture designed for independ
 ---
 
 ## 3. Remote Model Artifact Strategy
-
+ 
 To ensure zero-manual-intervention reproducibility without storing heavy binary weights in Git:
-- The checkpoint file (`best_model.pt`) and temperature scaler (`temperature_scaler.json`) are resolved through `app/inference/artifacts.py`:
-  1. Check local path `checkpoints/baseline_convnext/best_model.pt`.
-  2. Check cached file `cache/models/best_model.pt`.
-  3. If missing, download from `MODEL_URL` / `SCALER_URL`, verify SHA-256 (`c2e7881e9206184b8cd43c7999e02c6faa946c254088aa9e19e6dcb3ff3d9cdc`), and cache atomically.
-- **Fail-Safe Integrity**: If the artifact cannot be located or verified, the service cleanly rejects requests and signals `GET /ready` as HTTP 503 (`not_ready`), preventing uncalibrated or misleading predictions.
+- The production checkpoint file (`best_model.pt`) and temperature scaler (`temperature_scaler.json`) are resolved through `app/inference/artifacts.py`:
+  1. Default production version: **`signalscope-v2`** (Canonical Checkpoint SHA-256: `47f6b2a19d6113d25028b1434d5c830a4521830621a44f76af43acd6be55178d`).
+  2. Archived rollback version: **`signalscope-baseline-v1`** (Canonical Checkpoint SHA-256: `c2e7881e9206184b8cd43c7999e02c6faa946c254088aa9e19e6dcb3ff3d9cdc`).
+  3. Resolution order: Local repository path -> Local cache (`cache/models/`) -> Remote URL (`MODEL_URL`, defaulting to GitHub Release `v2.0.0`).
+  4. **Strict Checksum Enforced**: Weights are verified against the canonical SHA-256 before loading. Mismatched or corrupted artifacts are immediately rejected with an HTTP 503 readiness failure, preventing degraded execution.
 
 ---
 

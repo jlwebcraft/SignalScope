@@ -20,10 +20,10 @@ This scorecard evaluates SignalScope across the official Smart India Hackathon (
 
 ## Key Project Differentiators
 
-1. **Empirically Calibrated Probabilities**: Raw logits are post-hoc calibrated via Temperature Scaling ($T=0.99953$), guaranteeing probabilities correspond to empirical risk without ungrounded accuracy claims.
+1. **Empirically Calibrated Probabilities**: Raw logits are post-hoc calibrated via Temperature Scaling ($T=0.9986$), guaranteeing probabilities correspond to empirical risk with an ECE of **0.0664** and Brier score of **0.1098** (6.7× reduction in calibration error vs raw output).
 2. **Responsible Uncertainty Framework**: When an image falls within the ambiguous decision corridor $[0.40, 0.60]$ or exhibits perturbation volatility ($S < 0.60$), SignalScope transparently outputs `verdict: "uncertain"` with *"Human review recommended"*.
 3. **Interactive Multimodal Explainability**: Pairs continuous Grad-CAM heatmap opacity crossfading with 2D Fast Fourier Transform power spectrum visualization and high-frequency energy ratio metrics.
 4. **Authenticity Stability Scoring (Bonus Module C)**: Probes prediction resilience against 4 controlled web degradations (JPEG 95, JPEG 85, Resizing 0.75x, Screenshot simulation), penalizing brittle features.
-5. **Model Artifact Integrity & Versioning**: Canonical model identifier `signalscope-baseline-v1` with SHA-256 integrity verification (`c2e7881e...`), readiness probe (`/ready`), and local caching.
+5. **Model Artifact Integrity & Versioning**: Production model identifier **`signalscope-v2`** with SHA-256 integrity verification (`47f6b2a19d6113d25028b1434d5c830a4521830621a44f76af43acd6be55178d`), strict refusal of mismatched weights, readiness probe (`/ready`), and local caching. Baseline `signalscope-baseline-v1` (`c2e7881e...`) remains fully accessible as an archived rollback artifact.
 6. **Privacy-Conscious Inference**: In-memory byte streaming with zero permanent disk storage of uploaded user images.
 7. **Complete Reproducibility**: 100% linear, auditable Git history with zero force pushes, fully verified across unit tests, smoke tests, and pre-flight checks.
