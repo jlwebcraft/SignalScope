@@ -302,5 +302,198 @@ All runs are fully reproducible using deterministic seeds (`seed=42`).
 | :--- | :--- | :---: | :--- | :--- |
 | **Baseline (v1)** | `checkpoints/baseline_convnext/best_model.pt` | 318.61 MB | `c2e7881e9206184b8cd43c7999e02c6faa946c254088aa9e19e6dcb3ff3d9cdc` | Active Production |
 | **Experiment 1** | `checkpoints/additional_training/exp1/best_model.pt` | 318.60 MB | `682d0cc050512aa98cbe4d286b1b3f864de48e4cdca86d0cc34638b79bb8cefc` | Completed |
-| **Experiment 2** | `checkpoints/additional_training/exp2/best_model.pt` | 318.60 MB | `5d1568c6742f85ae434e91201c356c224966dcc12ca8b8d650365f3aa3d421be` | Candidate |
-| **Experiment 3** | `checkpoints/additional_training/exp3/best_model.pt` | 318.60 MB | `1580110e262f6450df85e9b3b909f249d96e1f2f49909b695875d00457187bfb` | **Recommended Best** |
+| **Experiment 2** | `checkpoints/additional_training/exp2/best_model.pt` | 318.60 MB | `5d1568c6742f85ae434e91201c356c224966dcc12ca8b8d650365f3aa3d421be` | Candidate (1-ep) |
+| **Experiment 3** | `checkpoints/additional_training/exp3/best_model.pt` | 318.60 MB | `1580110e262f6450df85e9b3b909f249d96e1f2f49909b695875d00457187bfb` | Candidate (1-ep) |
+| **Exp2-5ep (Best Ep 4)** | `checkpoints/additional_training/exp2_5ep/best_model.pt` | 106.20 MB | `bb0e5c7e677cc9d66f2e47920d4b8ba65a193bba1bd73b4a4c79fab7a6120fe9` | Extended Candidate |
+| **Exp3-5ep (Best Ep 3)** | `checkpoints/additional_training/exp3_5ep/best_model.pt` | 106.20 MB | `47f6b2a19d6113d25028b1434d5c830a4521830621a44f76af43acd6be55178d` | **Recommended Best Overall** |
+
+---
+
+## 18. Second-Stage Extended Training Study
+
+Following the initial 1-epoch proof-of-concept, a second-stage controlled study was conducted to investigate whether extended training (up to 5 epochs with validation-based early stopping) yields deeper generalization, superior calibration, and increased forensic stability.
+
+### 18.1 Dataset-Count Reconciliation
+An initial estimate anticipated approximately 220,000 images in the external pool. A forensic recursive scan and CSV cross-reference resolved this discrepancy:
+- **`version-2` Directory Ground Truth**:
+  - `AIGenImages2026`: exactly **10,876 images** (plus 3 CSV index files)
+  - `REAL`: exactly **132,528 images** across 11 category subdirectories (plus 1 CSV index file)
+  - Total in `version-2`: exactly **143,404 valid image files** (143,408 total files).
+- **Combined Repository Total**:
+  - When combined with the official training pool (`SignalScope-data\train`, 100,000 images), the total accessible image inventory across the repository is **243,404 images**.
+- **Explanation**: The ~220k figure was an informal estimate of the entire multi-domain collection (100k official + ~120k–140k new data). The audit did not miss, omit, or exclude any files or directories; every byte on disk is strictly verified and cataloged.
+
+### 18.2 Exact Training Composition
+Both extended candidates were trained on the identical balanced dataset pool:
+- **Total Training Samples**: **29,762**
+  - **Class Balance**: Exactly 14,883 Real (50.0%) and 14,879 Synthetic (50.0%).
+  - **Source Balance**:
+    - 15,000 Official SIH samples (10,000 synthetic, 5,000 real)
+    - 9,758 `AIGenImages2026/train` paired samples (4,879 synthetic, 4,879 real)
+    - 5,004 Photographic Real samples from `version-2/REAL` (cars, apparel, storefronts, dishes, furniture, toys).
+  - **Split Integrity**: Zero sample overlap across training, old local validation, and new-data validation.
+
+### 18.3 Epoch-by-Epoch Progression
+
+#### Experiment A (`exp2_5ep`: Balanced Mixed-Domain, Standard Augmentations)
+| Epoch | Train Loss | Val-Old Loss | Val-Old AUC | Val-New Loss | Val-New AUC | Macro-F1 | New FPR | Composite Score | Note |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **1** | 0.2035 | 0.0375 | 0.9991 | 0.4589 | 0.9076 | 0.8057 | 0.0519 | 0.9533 | Strong start |
+| **2** | 0.0838 | 0.0418 | 0.9990 | 0.4249 | 0.9157 | 0.8317 | 0.1932 | 0.9573 | Improvement |
+| **3** | 0.0321 | 0.0500 | 0.9988 | 0.4916 | 0.9240 | 0.8470 | 0.1735 | 0.9614 | Continuing gain |
+| **4** | **0.0075** | **0.0578** | **0.9988** | **0.6249** | **0.9267** | **0.8505** | **0.1753** | **0.9627** | **Optimal Convergence Point (Saved Checkpoint)** |
+| **5** | 0.0021 | 0.0571 | 0.9983 | 0.7268 | 0.9257 | 0.8440 | 0.2021 | 0.9620 | Overfitting onset (val loss rise) |
+
+#### Experiment B (`exp3_5ep`: Balanced Mixed-Domain, Forensic Augmentations)
+| Epoch | Train Loss | Val-Old Loss | Val-Old AUC | Val-New Loss | Val-New AUC | Macro-F1 | New FPR | Composite Score | Note |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **1** | 0.2335 | 0.0441 | 0.9989 | 0.4364 | 0.9169 | 0.8043 | 0.0429 | 0.9579 | High precision |
+| **2** | 0.1157 | 0.0391 | 0.9991 | 0.5020 | 0.9210 | 0.7885 | 0.3453 | 0.9601 | Feature adaptation |
+| **3** | **0.0684** | **0.0483** | **0.9991** | **0.4108** | **0.9220** | **0.8578** | **0.1395** | **0.9606** | **Optimal Convergence Point (Saved Checkpoint)** |
+| **4** | 0.0302 | 0.0481 | 0.9987 | 0.6135 | 0.9205 | 0.8303 | 0.2308 | 0.9596 | Val loss uptick |
+| **5** | 0.0128 | 0.0674 | 0.9981 | 0.6304 | 0.9223 | 0.8523 | 0.1807 | 0.9602 | Early Stopping Triggered (Patience: 2) |
+
+---
+
+### 18.4 Comprehensive Dual-Domain Evaluation
+
+#### Domain 1: LOCAL VALIDATION (15,000 samples, Official 32×32)
+| Model | ROC-AUC | Macro-F1 (0.50) | Accuracy (0.50) | FPR (0.50) | ECE | Brier Score |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Baseline (v1)** | **0.9992** | **0.9908** | **99.08%** | 0.0103 | **0.0062** | **0.0079** |
+| **Exp2-5ep (Best Ep 4)** | 0.9988 | 0.9877 | 98.77% | **0.0100** | 0.0063 | 0.0083 |
+| **Exp3-5ep (Best Ep 3)** | 0.9991 | 0.9851 | 98.51% | 0.0185 | 0.0086 | 0.0119 |
+
+#### Domain 2: NEW-DATA VALIDATION (1,118 samples, Multi-Resolution)
+| Model | ROC-AUC | Macro-F1 (0.50) | Accuracy (0.50) | FPR (0.50) | Opt. Acc (Thresh) | Opt. FPR | ECE | Brier Score |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Baseline (v1)** | 0.5950 | 0.4313 | 53.22% | 88.91% | 57.78% (0.9900) | 68.69% | 0.4462 | 0.4480 |
+| **Exp2-5ep (Best Ep 4)** | **0.9267** | 0.8505 | 85.15% | 17.53% | 85.96% (0.9751) | **6.44%** | 0.1095 | 0.1265 |
+| **Exp3-5ep (Best Ep 3)** | 0.9220 | **0.8578** | **85.78%** | **13.95%** | **86.40%** (0.6338) | 9.84% | **0.0664** | **0.1098** |
+
+---
+
+### 18.5 Generator-Stratified External-Domain Validation
+Evaluation across all 19 modern generative families in `AIGenImages2026/val/1_fake/` (evaluated against all 559 real validation images):
+
+| Generative Architecture | Samples | Baseline AUC | Exp2-5ep AUC | Exp3-5ep AUC | Exp3-5ep Recall @ 0.50 |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **ideogram-v3** | 31 | 0.6558 | 0.9805 | **0.9809** | 100.0% |
+| **gemini-25-flash-image** | 31 | 0.5922 | 0.9748 | **0.9790** | 96.8% |
+| **firefly_image5** | 17 | 0.7089 | **0.9722** | 0.9540 | 94.1% |
+| **gpt-image-1.5** | 31 | 0.5843 | **0.9675** | 0.9634 | 93.5% |
+| **flux-2-max** | 23 | 0.6521 | 0.9475 | **0.9552** | 95.7% |
+| **flux-2** | 31 | 0.6302 | **0.9538** | 0.9438 | 90.3% |
+| **flux-2-pro** | 31 | 0.6120 | **0.9490** | 0.9387 | 93.5% |
+| **flux-dev** | 23 | 0.6084 | **0.9347** | 0.9123 | 87.0% |
+| **imagen4** | 31 | 0.5891 | **0.9416** | 0.9288 | 90.3% |
+| **seedreamv4.5** | 31 | 0.5947 | **0.9362** | 0.9145 | 87.1% |
+| **gpt-image-1** | 31 | 0.6190 | **0.9377** | 0.9189 | 90.3% |
+| **hidream-i1-dev** | 31 | 0.5732 | **0.9298** | 0.9082 | 87.1% |
+| **gemini-3-pro-image-preview** | 31 | 0.5159 | 0.9181 | **0.9248** | 87.1% |
+| **reve** | 31 | 0.5284 | **0.9213** | 0.9042 | 87.1% |
+| **stable-diffusion-v35-medium**| 31 | 0.5312 | **0.9154** | 0.8974 | 83.9% |
+| **z-image-turbo** | 31 | 0.5528 | **0.9082** | 0.8876 | 80.6% |
+| **fast-sdxl** | 31 | 0.7278 | **0.8734** | 0.8719 | 74.2% |
+| **flux-pro-v1.1** | 31 | 0.5401 | **0.8213** | 0.8124 | 71.0% |
+| **midjourney_v7** | 31 | 0.5187 | **0.8106** | 0.7582 | 67.7% |
+| **Summary Metrics** | | | | | |
+| **Macro-Average Generator AUC**| — | **0.5961** | **0.9282** | **0.9237** | **87.3%** |
+| **Strongest Generator** | — | `fast-sdxl` (0.7278) | `ideogram-v3` (0.9805) | `ideogram-v3` (0.9809) | |
+| **Weakest Generator** | — | `gemini-3-pro` (0.5159)| `midjourney_v7` (0.8106)| `midjourney_v7` (0.7582)| |
+| **AUC Spread (Max - Min)** | — | **0.2119** | **0.1699** | **0.2227** | |
+
+---
+
+### 18.6 Probability Calibration & Temperature Scaling
+Calibrated post-hoc using Temperature Scaling fitted via L-BFGS on 2,000 disjoint official training samples:
+- **Baseline (v1)**: Fitted $T = 0.9995$. Val-New ECE = **0.4462**, Brier = **0.4480**. Severe overconfidence on out-of-domain false positives.
+- **Exp2-5ep**: Fitted $T = 1.0000$. Val-New ECE = **0.1095**, Brier = **0.1265** (4.1× reduction in calibration error).
+- **Exp3-5ep**: Fitted $T = 0.9986$. Val-New ECE = **0.0664**, Brier = **0.1098** (6.7× reduction in calibration error; best calibrated candidate).
+
+---
+
+### 18.7 Robustness Benchmark Comparison (1,000 Stratified Samples)
+Evaluated across 6 standardized degradation transformations using the official validation pool:
+
+| Degradation Transformation | Baseline AUC | Exp2-5ep AUC | Exp3-5ep AUC | Baseline Flip % | Exp2-5ep Flip % | Exp3-5ep Flip % |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Pristine Native** | 0.9994 | 0.9995 | 0.9992 | 0.0% | 0.0% | 0.0% |
+| **JPEG Quality 95** | 0.9993 | 0.9995 | 0.9983 | 0.0% | 0.2% | 0.3% |
+| **JPEG Quality 85** | 0.9994 | 0.9994 | 0.9972 | 0.4% | 0.5% | 0.5% |
+| **JPEG Quality 70** | 0.9995 | 0.9994 | 0.9990 | 0.6% | 0.9% | 0.7% |
+| **Resize (0.7x Down/Up)** | 0.9473 | 0.9521 | **0.9755** | 34.1% | 37.7% | **29.6%** |
+| **Screenshot Simulation** | 0.9186 | 0.9199 | **0.9560** | 40.5% | 42.9% | **37.8%** |
+| **Light Edit (90% Crop)** | 0.9914 | 0.9921 | **0.9974** | 14.6% | 15.6% | **8.8%** |
+| **Mean Degraded AUC** | **0.9759** | **0.9770** | **0.9872** | **15.03%** | **16.27%** | **12.95%** |
+| **Mean Probability Drift**| **0.1494** | **0.1620** | **0.1281** | — | — | — |
+
+- **Key Takeaway**: **Exp3-5ep is decisively the most robust model**. Under severe resolution downscaling and screenshot simulation, Exp3-5ep retained a degraded AUC of **0.9755** and **0.9560** (+0.0282 and +0.0374 over baseline), while reducing decision flips under cropping down to **8.8%**.
+
+---
+
+### 18.8 Confusion Matrices (New-Data Validation, $N = 1,118$)
+
+#### Baseline (v1) at threshold 0.50:
+$$\begin{bmatrix} \text{TN: } 62 & \text{FP: } 497 \\ \text{FN: } 26 & \text{TP: } 533 \end{bmatrix} \quad (\text{Real Acc: } 11.1\%, \text{ Synthetic Recall: } 95.3\%)$$
+
+#### Exp2-5ep at threshold 0.50:
+$$\begin{bmatrix} \text{TN: } 461 & \text{FP: } 98 \\ \text{FN: } 68 & \text{TP: } 491 \end{bmatrix} \quad (\text{Real Acc: } 82.5\%, \text{ Synthetic Recall: } 87.8\%)$$
+
+#### Exp3-5ep at threshold 0.50:
+$$\begin{bmatrix} \text{TN: } 481 & \text{FP: } 78 \\ \text{FN: } 81 & \text{TP: } 478 \end{bmatrix} \quad (\text{Real Acc: } 86.0\%, \text{ Synthetic Recall: } 85.5\%)$$
+
+#### Exp2-5ep at Optimal Threshold (0.9751):
+$$\begin{bmatrix} \text{TN: } 523 & \text{FP: } 36 \\ \text{FN: } 121 & \text{TP: } 438 \end{bmatrix} \quad (\text{Real Acc: } 93.6\%, \text{ Synthetic Recall: } 78.4\%)$$
+
+#### Exp3-5ep at Optimal Threshold (0.6338):
+$$\begin{bmatrix} \text{TN: } 504 & \text{FP: } 55 \\ \text{FN: } 97 & \text{TP: } 462 \end{bmatrix} \quad (\text{Real Acc: } 90.2\%, \text{ Synthetic Recall: } 82.6\%)$$
+
+---
+
+### 18.9 Required Master Comparison Table
+
+| Metric | Baseline (v1) | Exp2-5ep | Exp3-5ep | Winner |
+| :--- | :---: | :---: | :---: | :--- |
+| **Old AUC (In-Domain)** | **0.9992** | 0.9988 | 0.9991 | Baseline (Tied / <0.0004 diff) |
+| **New AUC (External)** | 0.5950 | **0.9267** | 0.9220 | **Exp2-5ep** (+0.0047 edge) |
+| **Old Macro-F1** | **0.9908** | 0.9877 | 0.9851 | Baseline |
+| **New Macro-F1** | 0.4313 | 0.8505 | **0.8578** | **Exp3-5ep** |
+| **New FPR (0.50 default)** | 88.91% | 17.53% | **13.95%** | **Exp3-5ep** (-3.58% lower FPR) |
+| **Optimal FPR** | 68.69% | **6.44%** | 9.84% | **Exp2-5ep** (requires th=0.975) |
+| **ECE (New-Data)** | 0.4462 | 0.1095 | **0.0664** | **Exp3-5ep** (39% better calibration) |
+| **Brier Score (New-Data)** | 0.4480 | 0.1265 | **0.1098** | **Exp3-5ep** |
+| **Mean Degraded AUC** | 0.9759 | 0.9770 | **0.9872** | **Exp3-5ep** (+0.0102 higher) |
+| **Flip Rate under Degradation** | 15.03% | 16.27% | **12.95%** | **Exp3-5ep** (Lowest flip rate) |
+| **Generator AUC Spread** | 0.2119 | **0.1699** | 0.2227 | **Exp2-5ep** (More uniform spread) |
+
+---
+
+### 18.10 Dimension-by-Dimension Leadership
+1. **ROC-AUC Leader**: **Exp2-5ep** (New-Data AUC: **0.9267**, Macro-average Generator AUC: **0.9282**).
+2. **F1 & Accuracy Leader**: **Exp3-5ep** (New-Data Macro-F1: **0.8578**, Default Accuracy: **85.78%**, Optimal Accuracy: **86.40%**).
+3. **Calibration Leader**: **Exp3-5ep** (ECE: **0.0664**, Brier: **0.1098**; reflects authentic predictive uncertainty).
+4. **Robustness Leader**: **Exp3-5ep** (Mean Degraded AUC: **0.9872**, Degraded Accuracy: **86.85%**, Flip Rate: **12.95%**).
+5. **Overall Generalization Leader**: **Exp3-5ep**.  
+   *Scientific Rationale*: While Exp2-5ep holds a minor +0.0047 raw AUC advantage, Exp3-5ep dominates across all operational reliability metrics: 39% lower calibration error, 20% lower false positive rate at default threshold (13.95% vs 17.53%), substantially superior robustness to social media compression and downsampling (+0.0102 AUC, -3.3% flip rate), and near-ideal threshold stability (operating threshold 0.6338 vs extreme 0.9751 for Exp2).
+
+---
+
+### 18.11 Second-Stage Limitations
+1. **Generator-Stratified Evaluation Disclaimer**: Generator identities in `AIGenImages2026` are matched pairs. This dataset represents an **external-domain evaluation set**, not a proven unseen-generator benchmark.
+2. **`midjourney_v7` Challenge**: Both models found `midjourney_v7` the most difficult modern generator (Exp2 AUC: 0.8106, Exp3 AUC: 0.7582), indicating that latest diffusion/autoregressive texture blending requires continued fine-grained focus.
+
+---
+
+### 18.12 Exact Checkpoint Hashes
+- **`checkpoints/additional_training/exp2_5ep/best_model.pt`**:  
+  SHA-256: `bb0e5c7e677cc9d66f2e47920d4b8ba65a193bba1bd73b4a4c79fab7a6120fe9`
+- **`checkpoints/additional_training/exp3_5ep/best_model.pt`**:  
+  SHA-256: `47f6b2a19d6113d25028b1434d5c830a4521830621a44f76af43acd6be55178d`
+
+---
+
+### 18.13 Production Governance Status
+**PRODUCTION MODEL CHANGE: NOT PERFORMED**  
+The active production model remains `signalscope-baseline-v1`. No models were deployed to Google Cloud Run, no release was published, and no frontend configurations were updated.
+
