@@ -9,12 +9,12 @@ interface Step {
 }
 
 const STEPS: Step[] = [
-  { id: "validate", label: "Validating input image dimensions and security integrity" },
-  { id: "spatial", label: "Extracting ConvNeXt-Tiny deep spatial representations" },
-  { id: "calib", label: "Applying post-hoc Temperature Scaling calibration (T=0.9995)" },
-  { id: "spectral", label: "Computing 2D FFT log-magnitude spectral distribution" },
-  { id: "gradcam", label: "Calculating Grad-CAM spatial activation attribution" },
-  { id: "robustness", label: "Evaluating Authenticity Stability under 4 perturbation probes" },
+  { id: "validate", label: "Validating input image dimensions & integrity" },
+  { id: "spatial", label: "Extracting ConvNeXt-Tiny spatial representations" },
+  { id: "calib", label: "Applying Temperature Scaling calibration (T=0.9995)" },
+  { id: "spectral", label: "Computing 2D Fourier log-magnitude spectrum" },
+  { id: "gradcam", label: "Generating Grad-CAM spatial activation map" },
+  { id: "robustness", label: "Evaluating stability across 4 perturbation probes" },
 ];
 
 export const AnalysisProgress: React.FC = () => {
@@ -28,15 +28,15 @@ export const AnalysisProgress: React.FC = () => {
   }, []);
 
   return (
-    <div className="forensic-panel p-5 max-w-lg mx-auto space-y-4 animate-fadeIn">
-      <div className="flex items-center space-x-2.5 border-b border-slate-800 pb-3">
-        <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
+    <div className="bg-[#ffffff] border border-[#e5e2d9] p-6 max-w-md mx-auto space-y-4 shadow-sm animate-fadeIn">
+      <div className="flex items-center space-x-2.5 border-b border-[#e5e2d9] pb-3">
+        <Loader2 className="w-4 h-4 text-[#9a3412] animate-spin" />
         <div>
-          <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-            Executing Forensic Analysis Pipeline
+          <h4 className="text-xs font-mono font-bold text-[#121316] uppercase tracking-wider">
+            Executing Forensic Pipeline
           </h4>
-          <p className="text-[11px] font-mono text-slate-500">
-            Running ConvNeXt spatial, 2D Fourier spectral, and perturbation probes
+          <p className="text-[11px] font-mono text-[#8c8a82]">
+            Spatial, spectral, and perturbation evaluations
           </p>
         </div>
       </div>
@@ -49,24 +49,24 @@ export const AnalysisProgress: React.FC = () => {
           return (
             <div
               key={step.id}
-              className={`flex items-center space-x-2.5 transition-colors duration-150 ${
+              className={`flex items-center space-x-3 transition-colors duration-150 ${
                 isDone
-                  ? "text-slate-400"
+                  ? "text-[#606570]"
                   : isCurrent
-                  ? "text-slate-100 font-medium"
-                  : "text-slate-600"
+                  ? "text-[#121316] font-semibold"
+                  : "text-[#8c8a82]/60"
               }`}
             >
-              <div className="w-4 flex justify-center text-[10px]">
+              <div className="w-5 text-[11px] font-mono shrink-0">
                 {isDone ? (
-                  <span className="text-emerald-400 font-bold">✓</span>
+                  <span className="text-[#166534] font-bold">0{idx + 1}✓</span>
                 ) : isCurrent ? (
-                  <span className="text-sky-400 animate-pulse">●</span>
+                  <span className="text-[#9a3412] font-bold">0{idx + 1}►</span>
                 ) : (
-                  <span className="text-slate-700">○</span>
+                  <span className="text-[#8c8a82]/60">0{idx + 1}</span>
                 )}
               </div>
-              <span className="text-[11px] truncate">{step.label}</span>
+              <span className="text-xs truncate">{step.label}</span>
             </div>
           );
         })}
