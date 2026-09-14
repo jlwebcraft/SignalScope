@@ -82,10 +82,19 @@ class SignalScopeDataset(Dataset):
 
         try:
             with Image.open(img_path) as img:
+                if getattr(img, "format", None) == "JPEG":
+                    try:
+                        img.draft("RGB", (448, 448))
+                    except Exception:
+                        pass
                 pil_img = img.convert("RGB")
+                if max(pil_img.size) > 512:
+                    pil_img.thumbnail((448, 448), Image.Resampling.BILINEAR)
         except Exception:
             try:
                 pil_img = load_image_safely(img_path)
+                if max(pil_img.size) > 512:
+                    pil_img.thumbnail((448, 448), Image.Resampling.BILINEAR)
             except Exception as exc:
                 logger.warning(f"Error loading {img_path}: {exc}. Using blank placeholder.")
                 pil_img = Image.new("RGB", (224, 224), color=(128, 128, 128))

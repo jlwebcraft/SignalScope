@@ -172,7 +172,7 @@ class HealthResponse(BaseModel):
 class ReadyResponse(BaseModel):
     """Readiness probe response schema."""
     status: str = Field(default="ready")
-    model_version: str = Field(default="signalscope-baseline-v1")
+    model_version: str = Field(default="signalscope-v2")
     model_loaded: bool = Field(default=True)
     has_trained_weights: bool = Field(default=True)
     device: str = Field(default="cpu")

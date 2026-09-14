@@ -40,7 +40,7 @@ async def readiness_check() -> ReadyResponse:
         )
     return ReadyResponse(
         status="ready",
-        model_version=ModelArtifactManager.get_version_info()["model_version"],
+        model_version=inference_engine.model_version,
         model_loaded=inference_engine.is_ready,
         has_trained_weights=inference_engine.has_trained_weights,
         device=inference_engine.device,
@@ -51,7 +51,16 @@ async def readiness_check() -> ReadyResponse:
 @router.get("/info", summary="System Information & Guidelines")
 async def get_system_info():
     """Returns system parameters, model metadata, ethical scope, and supported modalities."""
-    version_info = ModelArtifactManager.get_version_info()
+    try:
+        version_info = ModelArtifactManager.get_version_info(inference_engine.model_version)
+    except ValueError:
+        version_info = {
+            "model_version": inference_engine.model_version,
+            "architecture": "ConvNeXtTinyDetector",
+            "backbone": "unloaded",
+            "weights_sha256": "unknown",
+            "calibration_temperature": 1.0,
+        }
     return {
         "name": "SignalScope",
         "description": "Telling Real From Synthetic in the Age of Generative Media",

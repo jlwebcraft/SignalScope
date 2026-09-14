@@ -42,6 +42,7 @@ class SignalScopeInferenceEngine:
         device: Optional[str] = None,
         operating_threshold: float = 0.50,
         uncertainty_band: float = 0.10,
+        model_version: Optional[str] = None,
     ) -> None:
         """Initializes the inference engine.
 
@@ -51,12 +52,17 @@ class SignalScopeInferenceEngine:
             device: Computing device ('cpu', 'cuda', or None for auto).
             operating_threshold: Calibrated decision boundary for synthetic classification.
             uncertainty_band: Half-width around threshold where verdict is deemed 'uncertain'.
+            model_version: Registered model version ('signalscope-v2', 'signalscope-baseline-v1').
         """
         import os
         from app.inference.artifacts import ModelArtifactManager
 
         self.config_path = config_path
-        self.artifact_manager = ModelArtifactManager(checkpoint_path=checkpoint_path)
+        self.artifact_manager = ModelArtifactManager(
+            checkpoint_path=checkpoint_path,
+            model_version=model_version,
+        )
+        self.model_version = self.artifact_manager.model_version
         self.checkpoint_path = str(self.artifact_manager.checkpoint_path)
 
         # Device determination: explicit param > DEVICE env var > auto CUDA detection
@@ -84,6 +90,15 @@ class SignalScopeInferenceEngine:
         from model.calibration import TemperatureScaler
         self.scaler = TemperatureScaler()
         self.model_name = "unloaded"
+
+        if self.artifact_manager.spec is None:
+            logger.error(
+                f"Refusing to initialize inference engine: unknown or invalid model_version '{self.model_version}'. "
+                "Inference engine will remain offline (not_ready)."
+            )
+            self.has_trained_weights = False
+            self._is_ready = False
+            return
 
         resolved_ckpt = self.artifact_manager.resolve_checkpoint()
         if resolved_ckpt and resolved_ckpt.exists():

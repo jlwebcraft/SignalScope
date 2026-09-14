@@ -2,17 +2,23 @@
 ### *"Telling Real From Synthetic in the Age of Generative Media"*
 **Event**: Smart India Hackathon (SIH) 2026 Internal Hackathon  
 **Target Problem**: AI-Generated Synthetic Media Detection  
-**Canonical Production Model Version**: `signalscope-baseline-v1`  
-**Git Branch**: `feat/final-hardening`  
+**Canonical Production Model Version**: `signalscope-v2`  
+**Weights SHA-256**: `47f6b2a19d6113d25028b1434d5c830a4521830621a44f76af43acd6be55178d`  
+**Archived Rollback Version**: `signalscope-baseline-v1` (`c2e7881e...`)  
+**Git Branch**: `feat/model-v2-release`  
 **Date**: September 13, 2026  
 
 ---
 
 ## 1. Executive Summary
 
-SignalScope is a reproducible, evidence-fusion authenticity detection system designed to distinguish authentic physical camera capture from synthetic AI-generated imagery. Developed for the SIH 2026 hackathon, SignalScope pairs transfer learning on deep convolutional representations (**ConvNeXt-Tiny**) with frequency-domain spectral statistics (**2D Fast Fourier Transform**), an empirical **Authenticity Stability Score** ($S \in [0, 1]$), post-hoc **Probability Calibration** ($T = 0.99953$), and a **Responsible Uncertainty Framework**.
+SignalScope is a reproducible, evidence-fusion authenticity detection system designed to distinguish authentic physical camera capture from synthetic AI-generated imagery across diverse generative families and high-resolution camera distributions. Developed for the SIH 2026 hackathon, SignalScope pairs transfer learning on deep convolutional representations (**ConvNeXt-Tiny**) with frequency-domain spectral statistics (**2D Fast Fourier Transform**), an empirical **Authenticity Stability Score** ($S \in [0, 1]$), post-hoc **Probability Calibration** ($T = 0.9986$), and a **Responsible Uncertainty Framework**.
 
-On our strictly separated 15,000-image local validation partition, the primary detector achieves **0.9992 ROC-AUC**, **99.08% Macro-F1**, and a **1.03% False Positive Rate** at default operating threshold. The organizer's held-out test partition (`C:\Programming\SignalScope-data\test`) remained completely untouched throughout all phases of development.
+Following rigorous extended training and a multi-gate validation process, the production model was promoted from `signalscope-baseline-v1` to **`signalscope-v2`** (`exp3_5ep`, Epoch 3). SignalScope v2 resolves the cross-generator domain gap and high-resolution camera photograph distribution shift:
+- **Photographic-Real Holdout FPR**: **1.37%** on 9,000 unseen real photographs (vs Baseline 74.69% — a **98.17% relative false-alarm reduction**).
+- **External Cross-Generator Validation AUC**: **0.9220** across 19 modern generative families (vs Baseline 0.5933).
+- **Legacy Domain Preservation**: **0.9991 ROC-AUC**, **98.51% Macro-F1**, and **98.51% Accuracy** on the 15,000-image local validation partition.
+- **Strict Data Isolation**: The organizer's held-out test partition (`C:\Programming\SignalScope-data\test`) remained completely untouched throughout all phases of development (0 accesses).
 
 ---
 
@@ -193,7 +199,7 @@ SignalScope implements a strict three-tier verdict policy:
 - **Endpoints**:
   - `GET /health`: Liveness probe.
   - `GET /ready`: Readiness probe distinguishing service boot from model checkpoint readiness.
-  - `GET /api/v1/info`: Exposes model version identifier (`signalscope-baseline-v1`), SHA-256 hash, and active computing device.
+  - `GET /api/v1/info`: Exposes production model version identifier (`signalscope-v2`), weights SHA-256 (`47f6b2a1...`), calibration temperature ($T=0.9986$), and active computing device.
   - `POST /api/v1/predict`: Full inference endpoint adhering to versioned schema contract `1.0`.
 - **Security Protections**:
   - 25 MB payload limit.

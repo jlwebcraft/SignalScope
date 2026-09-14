@@ -83,7 +83,8 @@ def run_smoke_test():
     r_info = client.get("/api/v1/info")
     assert r_info.status_code == 200, f"Info check failed: {r_info.text}"
     info_data = r_info.json()
-    assert info_data["model_metadata"]["model_version"] == "signalscope-baseline-v1"
+    assert info_data["model_metadata"]["model_version"] == "signalscope-v2"
+    assert info_data["model_metadata"]["weights_sha256"] == "47f6b2a19d6113d25028b1434d5c830a4521830621a44f76af43acd6be55178d"
     print(f"  GET /info:   Model '{info_data['model_metadata']['model_version']}' on device '{info_data['model_metadata']['device']}'")
 
     # 5. Prediction with In-Memory Clean Bytes

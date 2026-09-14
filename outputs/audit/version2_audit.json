@@ -1,0 +1,302 @@
+{
+  "version_2_root": "C:\\Programming\\SignalScope-data\\version-2",
+  "total_files": {
+    "aigen_images_2026_total": 10876,
+    "aigen_train_real": 4879,
+    "aigen_train_fake": 4879,
+    "aigen_val_real": 559,
+    "aigen_val_fake_total": 559,
+    "aigen_val_generators": {
+      "fast-sdxl": 31,
+      "firefly_image5": 17,
+      "flux-2": 31,
+      "flux-2-max": 23,
+      "flux-2-pro": 31,
+      "flux-dev": 23,
+      "flux-pro-v1.1": 31,
+      "gemini-25-flash-image": 31,
+      "gemini-3-pro-image-preview": 31,
+      "gpt-image-1": 31,
+      "gpt-image-1.5": 31,
+      "hidream-i1-dev": 31,
+      "ideogram-v3": 31,
+      "imagen4": 31,
+      "midjourney_v7": 31,
+      "reve": 31,
+      "seedreamv4.5": 31,
+      "stable-diffusion-v35-medium": 31,
+      "z-image-turbo": 31
+    },
+    "real_dataset_total": 132528,
+    "real_categories": {
+      "apparel": 32226,
+      "artwork": 4957,
+      "cars": 8144,
+      "dishes": 5831,
+      "furniture": 10488,
+      "illustrations": 3347,
+      "landmark": 33063,
+      "meme": 3301,
+      "packaged": 23382,
+      "storefronts": 5387,
+      "toys": 2402
+    },
+    "csv_metadata_files": 4
+  },
+  "csv_metadata": {
+    "fake_metadata.csv": {
+      "path": "C:\\Programming\\SignalScope-data\\version-2\\AIGenImages2026\\fake_metadata.csv",
+      "header": [
+        "image_id",
+        "filename",
+        "caption",
+        "caption_id",
+        "split"
+      ],
+      "rows": 5439
+    },
+    "real_metadata.csv": {
+      "path": "C:\\Programming\\SignalScope-data\\version-2\\AIGenImages2026\\train\\real_metadata.csv",
+      "header": [
+        "filename",
+        "type",
+        "url_date",
+        "image_url",
+        "tweet_id",
+        "split"
+      ],
+      "rows": 4879
+    },
+    "eval_real_pairs.csv": {
+      "path": "C:\\Programming\\SignalScope-data\\version-2\\AIGenImages2026\\val\\eval_real_pairs.csv",
+      "header": [
+        "fake",
+        "real",
+        "similarity"
+      ],
+      "rows": 559
+    },
+    "train.csv": {
+      "path": "C:\\Programming\\SignalScope-data\\version-2\\REAL\\train.csv",
+      "header": [
+        "image_name",
+        "label"
+      ],
+      "rows": 132528
+    }
+  },
+  "sample_filenames": {
+    "aigen_train_real": [
+      "2025-08_real_sites_10034.jpeg",
+      "2025-08_real_sites_1005.jpeg",
+      "2025-08_real_sites_10080.jpeg",
+      "2025-08_real_sites_10097.jpeg",
+      "2025-08_real_sites_10114.jpeg"
+    ],
+    "aigen_train_fake": [
+      "fal-ai_bytedance_seedream_v4.5_text-to-image_007c9749-4b6f-440f-8076-fcadece51039_0.png",
+      "fal-ai_bytedance_seedream_v4.5_text-to-image_024ffe37-3f16-438b-9c5c-9123409e4918_0.png",
+      "fal-ai_bytedance_seedream_v4.5_text-to-image_03820047-8ff1-48eb-86d3-bfaf315d8899_0.png",
+      "fal-ai_bytedance_seedream_v4.5_text-to-image_041229d6-e84b-4c17-832c-69d948c1a0ea_0.png",
+      "fal-ai_bytedance_seedream_v4.5_text-to-image_0577187f-3258-4ef8-a0cb-6ec79f61295b_0.png"
+    ],
+    "aigen_val_fake": [
+      "fal-ai_fast-sdxl_07fc21f7-92cb-4404-8695-6ac18151ed3b_0.jpeg",
+      "fal-ai_fast-sdxl_0d46ad3f-9253-4161-b68b-922c908f56d8_0.jpeg",
+      "fal-ai_fast-sdxl_122b938b-0a48-400d-9335-a69c95f7c4f6_0.jpeg",
+      "fal-ai_fast-sdxl_1cd49257-a537-4a09-ad70-b238bb35ab3d_0.jpeg",
+      "fal-ai_fast-sdxl_22858b89-3ba9-4a70-b0f3-b5f87a47359f_0.jpeg",
+      "fal-ai_fast-sdxl_32ecee10-6e67-4dfb-ab7c-638a287ee051_0.jpeg",
+      "fal-ai_fast-sdxl_3daa6483-cbe4-4795-888a-7ccf07eb2716_0.jpeg",
+      "fal-ai_fast-sdxl_41cd89b7-848c-45d6-ae60-90467c9fffd7_0.jpeg",
+      "fal-ai_fast-sdxl_435175a9-9e06-4182-879a-5e52d28230c1_0.jpeg",
+      "fal-ai_fast-sdxl_4e5cabaf-ce8c-4477-af45-fd689aa2f033_0.jpeg"
+    ],
+    "real_samples": [
+      "image0000.jpg",
+      "image0001.jpg",
+      "image0002.jpg",
+      "image0003.jpg",
+      "image0004.jpg"
+    ]
+  },
+  "image_properties": {
+    "aigen_train": {
+      "total_inspected": 9758,
+      "common_dimensions": [
+        {
+          "dimensions": "1024x1024",
+          "count": 3231,
+          "pct": 33.11
+        },
+        {
+          "dimensions": "1200x630",
+          "count": 495,
+          "pct": 5.07
+        },
+        {
+          "dimensions": "1024x768",
+          "count": 462,
+          "pct": 4.73
+        },
+        {
+          "dimensions": "1080x1350",
+          "count": 394,
+          "pct": 4.04
+        },
+        {
+          "dimensions": "1200x675",
+          "count": 390,
+          "pct": 4.0
+        },
+        {
+          "dimensions": "1440x960",
+          "count": 390,
+          "pct": 4.0
+        },
+        {
+          "dimensions": "1200x800",
+          "count": 379,
+          "pct": 3.88
+        },
+        {
+          "dimensions": "1300x731",
+          "count": 346,
+          "pct": 3.55
+        }
+      ],
+      "min_dimension": [
+        447,
+        251
+      ],
+      "max_dimension": [
+        8256,
+        5504
+      ],
+      "modes": {
+        "RGB": 9657,
+        "L": 1,
+        "RGBA": 65,
+        "P": 35
+      },
+      "extensions": {
+        ".jpeg": 5365,
+        ".png": 3351,
+        ".webp": 130,
+        ".jpg": 912
+      },
+      "corrupt_count": 0,
+      "corrupt_samples": [],
+      "exif_count": 305,
+      "exif_pct": 3.13
+    },
+    "aigen_val": {
+      "total_inspected": 1118,
+      "common_dimensions": [
+        {
+          "dimensions": "1024x1024",
+          "count": 412,
+          "pct": 36.85
+        },
+        {
+          "dimensions": "1024x768",
+          "count": 143,
+          "pct": 12.79
+        },
+        {
+          "dimensions": "1024x683",
+          "count": 112,
+          "pct": 10.02
+        },
+        {
+          "dimensions": "768x1024",
+          "count": 42,
+          "pct": 3.76
+        },
+        {
+          "dimensions": "683x1024",
+          "count": 28,
+          "pct": 2.5
+        },
+        {
+          "dimensions": "1024x681",
+          "count": 26,
+          "pct": 2.33
+        },
+        {
+          "dimensions": "2048x2048",
+          "count": 23,
+          "pct": 2.06
+        },
+        {
+          "dimensions": "1024x680",
+          "count": 21,
+          "pct": 1.88
+        }
+      ],
+      "min_dimension": [
+        560,
+        404
+      ],
+      "max_dimension": [
+        3072,
+        4096
+      ],
+      "modes": {
+        "RGB": 1111,
+        "L": 7
+      },
+      "extensions": {
+        ".jpg": 559,
+        ".jpeg": 201,
+        ".png": 358
+      },
+      "corrupt_count": 0,
+      "corrupt_samples": [],
+      "exif_count": 32,
+      "exif_pct": 2.86
+    },
+    "real_sample": {
+      "total_inspected": 5000,
+      "common_dimensions": [
+        {
+          "dimensions": "512x512",
+          "count": 5000,
+          "pct": 100.0
+        }
+      ],
+      "min_dimension": [
+        512,
+        512
+      ],
+      "max_dimension": [
+        512,
+        512
+      ],
+      "modes": {
+        "RGB": 5000
+      },
+      "extensions": {
+        ".jpg": 5000
+      },
+      "corrupt_count": 0,
+      "corrupt_samples": [],
+      "exif_count": 0,
+      "exif_pct": 0.0
+    }
+  },
+  "duplicates_and_leakage": {
+    "internal_aigen_duplicate_groups": 2,
+    "train_val_duplicate_leakage_count": 0,
+    "real_fake_duplicate_count": 0,
+    "aigen_vs_official_train_overlap_count": 0,
+    "real_vs_official_train_overlap_count": 0
+  },
+  "critical_forensic_findings": {
+    "clean_interpretability_as_ai_vs_real": false,
+    "reason": "AIGenImages2026 is NOT an AI-only directory. It contains both real (0_real) and fake (1_fake) images in matched pairs for both train (4,879 each) and val (559 each). Naive folder-level labeling would misclassify 5,438 real images as AI.",
+    "unseen_generators_structure": "AIGenImages2026 val/1_fake explicitly categorizes 559 fake images across 19 modern generative models (Flux, Gemini, GPT-Image-1.5, Firefly, SDXL, Midjourney-v7, Imagen4, Ideogram-v3, etc.).",
+    "resolution_mismatch": "Official dataset is 32x32 JPEG. AIGenImages2026 and REAL images are high-resolution (predominantly 1024x1024, 768x768, 512x512, etc.). Direct 32x32 downsampling would destroy high-frequency artifacts; ConvNeXt receives 224x224.",
+    "non_comparable_media_in_real": "REAL contains 'illustrations' (3,347) and 'meme' (3,301) which are drawings, graphics, and text overlays rather than natural camera sensor photos."
+  }
+}

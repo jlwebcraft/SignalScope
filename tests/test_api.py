@@ -55,9 +55,20 @@ def test_api_v1_info():
     data = response.json()
     assert data["name"] == "SignalScope"
     assert "model_metadata" in data
-    assert data["model_metadata"]["model_version"] == "signalscope-baseline-v1"
+    assert data["model_metadata"]["model_version"] == "signalscope-v2"
+    assert data["model_metadata"]["weights_sha256"] == "47f6b2a19d6113d25028b1434d5c830a4521830621a44f76af43acd6be55178d"
+    assert data["model_metadata"]["calibration_temperature"] == 0.9986
+    assert data["model_metadata"]["has_trained_weights"] is True
     assert "ethical_scope" in data
     assert data["ethical_scope"]["is_identity_system"] is False
+
+
+def test_api_v1_info_rollback_metadata():
+    from app.inference.artifacts import ModelArtifactManager
+    info = ModelArtifactManager.get_version_info("signalscope-baseline-v1")
+    assert info["model_version"] == "signalscope-baseline-v1"
+    assert info["weights_sha256"] == "c2e7881e9206184b8cd43c7999e02c6faa946c254088aa9e19e6dcb3ff3d9cdc"
+    assert info["calibration_temperature"] == 0.99953
 
 
 

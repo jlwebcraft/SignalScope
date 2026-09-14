@@ -1,0 +1,317 @@
+{
+  "robustness": {
+    "baseline": {
+      "transformations": {
+        "original": {
+          "description": "Pristine native 32x32",
+          "roc_auc": 0.9994,
+          "accuracy": 0.99,
+          "macro_f1": 0.99,
+          "fpr": 0.01,
+          "prediction_flip_rate": 0.0,
+          "mean_drift": 0.0
+        },
+        "jpeg_95": {
+          "description": "High-quality JPEG (Q=95)",
+          "roc_auc": 0.9993,
+          "accuracy": 0.99,
+          "macro_f1": 0.99,
+          "fpr": 0.01,
+          "prediction_flip_rate": 0.0,
+          "mean_drift": 0.0011
+        },
+        "jpeg_85": {
+          "description": "Standard web JPEG (Q=85)",
+          "roc_auc": 0.9994,
+          "accuracy": 0.986,
+          "macro_f1": 0.986,
+          "fpr": 0.016,
+          "prediction_flip_rate": 0.004,
+          "mean_drift": 0.0036
+        },
+        "jpeg_70": {
+          "description": "Aggressive social compression (Q=70)",
+          "roc_auc": 0.9995,
+          "accuracy": 0.986,
+          "macro_f1": 0.986,
+          "fpr": 0.02,
+          "prediction_flip_rate": 0.006,
+          "mean_drift": 0.0046
+        },
+        "resize": {
+          "description": "Bilinear downsample (0.7x) + Bicubic restore",
+          "roc_auc": 0.9473,
+          "accuracy": 0.657,
+          "macro_f1": 0.6119,
+          "fpr": 0.002,
+          "prediction_flip_rate": 0.341,
+          "mean_drift": 0.3395
+        },
+        "screenshot": {
+          "description": "Subpixel box blur (r=0.5) + JPEG Q=80",
+          "roc_auc": 0.9186,
+          "accuracy": 0.593,
+          "macro_f1": 0.5131,
+          "fpr": 0.002,
+          "prediction_flip_rate": 0.405,
+          "mean_drift": 0.4019
+        },
+        "light_edit": {
+          "description": "90% center crop + Bilinear restore",
+          "roc_auc": 0.9914,
+          "accuracy": 0.852,
+          "macro_f1": 0.8488,
+          "fpr": 0.002,
+          "prediction_flip_rate": 0.146,
+          "mean_drift": 0.1455
+        }
+      },
+      "summary": {
+        "mean_degraded_auc": 0.9759,
+        "mean_degraded_accuracy": 0.844,
+        "mean_flip_rate": 0.1503,
+        "mean_probability_drift": 0.1494
+      }
+    },
+    "exp2": {
+      "transformations": {
+        "original": {
+          "description": "Pristine native 32x32",
+          "roc_auc": 0.9995,
+          "accuracy": 0.986,
+          "macro_f1": 0.986,
+          "fpr": 0.02,
+          "prediction_flip_rate": 0.0,
+          "mean_drift": 0.0
+        },
+        "jpeg_95": {
+          "description": "High-quality JPEG (Q=95)",
+          "roc_auc": 0.9994,
+          "accuracy": 0.988,
+          "macro_f1": 0.988,
+          "fpr": 0.016,
+          "prediction_flip_rate": 0.002,
+          "mean_drift": 0.0027
+        },
+        "jpeg_85": {
+          "description": "Standard web JPEG (Q=85)",
+          "roc_auc": 0.9994,
+          "accuracy": 0.984,
+          "macro_f1": 0.984,
+          "fpr": 0.024,
+          "prediction_flip_rate": 0.004,
+          "mean_drift": 0.0049
+        },
+        "jpeg_70": {
+          "description": "Aggressive social compression (Q=70)",
+          "roc_auc": 0.9995,
+          "accuracy": 0.984,
+          "macro_f1": 0.984,
+          "fpr": 0.024,
+          "prediction_flip_rate": 0.006,
+          "mean_drift": 0.0062
+        },
+        "resize": {
+          "description": "Bilinear downsample (0.7x) + Bicubic restore",
+          "roc_auc": 0.9587,
+          "accuracy": 0.656,
+          "macro_f1": 0.6098,
+          "fpr": 0.0,
+          "prediction_flip_rate": 0.35,
+          "mean_drift": 0.3431
+        },
+        "screenshot": {
+          "description": "Subpixel box blur (r=0.5) + JPEG Q=80",
+          "roc_auc": 0.9296,
+          "accuracy": 0.581,
+          "macro_f1": 0.4918,
+          "fpr": 0.0,
+          "prediction_flip_rate": 0.425,
+          "mean_drift": 0.4138
+        },
+        "light_edit": {
+          "description": "90% center crop + Bilinear restore",
+          "roc_auc": 0.993,
+          "accuracy": 0.863,
+          "macro_f1": 0.8604,
+          "fpr": 0.0,
+          "prediction_flip_rate": 0.143,
+          "mean_drift": 0.1472
+        }
+      },
+      "summary": {
+        "mean_degraded_auc": 0.9799,
+        "mean_degraded_accuracy": 0.8427,
+        "mean_flip_rate": 0.155,
+        "mean_probability_drift": 0.153
+      }
+    },
+    "exp3": {
+      "transformations": {
+        "original": {
+          "description": "Pristine native 32x32",
+          "roc_auc": 0.9995,
+          "accuracy": 0.986,
+          "macro_f1": 0.986,
+          "fpr": 0.018,
+          "prediction_flip_rate": 0.0,
+          "mean_drift": 0.0
+        },
+        "jpeg_95": {
+          "description": "High-quality JPEG (Q=95)",
+          "roc_auc": 0.9995,
+          "accuracy": 0.987,
+          "macro_f1": 0.987,
+          "fpr": 0.016,
+          "prediction_flip_rate": 0.001,
+          "mean_drift": 0.0025
+        },
+        "jpeg_85": {
+          "description": "Standard web JPEG (Q=85)",
+          "roc_auc": 0.9993,
+          "accuracy": 0.985,
+          "macro_f1": 0.985,
+          "fpr": 0.02,
+          "prediction_flip_rate": 0.003,
+          "mean_drift": 0.0047
+        },
+        "jpeg_70": {
+          "description": "Aggressive social compression (Q=70)",
+          "roc_auc": 0.9994,
+          "accuracy": 0.988,
+          "macro_f1": 0.988,
+          "fpr": 0.016,
+          "prediction_flip_rate": 0.008,
+          "mean_drift": 0.0068
+        },
+        "resize": {
+          "description": "Bilinear downsample (0.7x) + Bicubic restore",
+          "roc_auc": 0.9663,
+          "accuracy": 0.649,
+          "macro_f1": 0.5997,
+          "fpr": 0.0,
+          "prediction_flip_rate": 0.355,
+          "mean_drift": 0.348
+        },
+        "screenshot": {
+          "description": "Subpixel box blur (r=0.5) + JPEG Q=80",
+          "roc_auc": 0.9373,
+          "accuracy": 0.572,
+          "macro_f1": 0.476,
+          "fpr": 0.0,
+          "prediction_flip_rate": 0.432,
+          "mean_drift": 0.4191
+        },
+        "light_edit": {
+          "description": "90% center crop + Bilinear restore",
+          "roc_auc": 0.9957,
+          "accuracy": 0.879,
+          "macro_f1": 0.8772,
+          "fpr": 0.0,
+          "prediction_flip_rate": 0.125,
+          "mean_drift": 0.128
+        }
+      },
+      "summary": {
+        "mean_degraded_auc": 0.9829,
+        "mean_degraded_accuracy": 0.8433,
+        "mean_flip_rate": 0.154,
+        "mean_probability_drift": 0.1515
+      }
+    }
+  },
+  "calibration": {
+    "baseline": {
+      "fitted_temperature": 0.9995,
+      "val_old": {
+        "raw_ece": 0.0074,
+        "calibrated_ece": 0.0074,
+        "raw_brier": 0.0081,
+        "calibrated_brier": 0.0081
+      },
+      "val_new": {
+        "raw_ece": 0.4462,
+        "calibrated_ece": 0.4462,
+        "raw_brier": 0.448,
+        "calibrated_brier": 0.448
+      }
+    },
+    "exp2": {
+      "fitted_temperature": 0.9976,
+      "val_old": {
+        "raw_ece": 0.0067,
+        "calibrated_ece": 0.0067,
+        "raw_brier": 0.0083,
+        "calibrated_brier": 0.0083
+      },
+      "val_new": {
+        "raw_ece": 0.0805,
+        "calibrated_ece": 0.0803,
+        "raw_brier": 0.1561,
+        "calibrated_brier": 0.1562
+      }
+    },
+    "exp3": {
+      "fitted_temperature": 0.8527,
+      "val_old": {
+        "raw_ece": 0.0065,
+        "calibrated_ece": 0.0076,
+        "raw_brier": 0.0093,
+        "calibrated_brier": 0.0095
+      },
+      "val_new": {
+        "raw_ece": 0.0573,
+        "calibrated_ece": 0.0749,
+        "raw_brier": 0.1439,
+        "calibrated_brier": 0.1465
+      }
+    }
+  },
+  "explainability": {
+    "baseline": {
+      "target_layer": "ConvNeXtBlock(\n  (conv_dw): Conv2d(768, 768, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=768)\n  (norm): LayerNorm((768,), eps=1e-06, elementwise_affine=True)\n  (mlp): Mlp(\n    (fc1): Linear(in_features=768, out_features=3072, bias=True)\n    (act): GELU()\n    (drop1): Dropout(p=0.0, inplace=False)\n    (norm): Identity()\n    (fc2): Linear(in_features=3072, out_features=768, bias=True)\n    (drop2): Dropout(p=0.0, inplace=False)\n  )\n  (shortcut): Identity()\n  (drop_path): Identity()\n)",
+      "output_logit": 11.3975,
+      "heatmap_shape": [
+        7,
+        7
+      ],
+      "heatmap_min": 0.0,
+      "heatmap_max": 1.0,
+      "heatmap_mean": 0.1153,
+      "gradcam_valid": false
+    },
+    "exp2": {
+      "target_layer": "ConvNeXtBlock(\n  (conv_dw): Conv2d(768, 768, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=768)\n  (norm): LayerNorm((768,), eps=1e-06, elementwise_affine=True)\n  (mlp): Mlp(\n    (fc1): Linear(in_features=768, out_features=3072, bias=True)\n    (act): GELU()\n    (drop1): Dropout(p=0.0, inplace=False)\n    (norm): Identity()\n    (fc2): Linear(in_features=3072, out_features=768, bias=True)\n    (drop2): Dropout(p=0.0, inplace=False)\n  )\n  (shortcut): Identity()\n  (drop_path): Identity()\n)",
+      "output_logit": -0.8282,
+      "heatmap_shape": [
+        7,
+        7
+      ],
+      "heatmap_min": 0.0,
+      "heatmap_max": 1.0,
+      "heatmap_mean": 0.126,
+      "gradcam_valid": false
+    },
+    "exp3": {
+      "target_layer": "ConvNeXtBlock(\n  (conv_dw): Conv2d(768, 768, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=768)\n  (norm): LayerNorm((768,), eps=1e-06, elementwise_affine=True)\n  (mlp): Mlp(\n    (fc1): Linear(in_features=768, out_features=3072, bias=True)\n    (act): GELU()\n    (drop1): Dropout(p=0.0, inplace=False)\n    (norm): Identity()\n    (fc2): Linear(in_features=3072, out_features=768, bias=True)\n    (drop2): Dropout(p=0.0, inplace=False)\n  )\n  (shortcut): Identity()\n  (drop_path): Identity()\n)",
+      "output_logit": -0.5264,
+      "heatmap_shape": [
+        7,
+        7
+      ],
+      "heatmap_min": 0.0,
+      "heatmap_max": 1.0,
+      "heatmap_mean": 0.1085,
+      "gradcam_valid": false
+    },
+    "spectral_verification": {
+      "fft_map_shape": [
+        32,
+        32
+      ],
+      "radial_profile_bins": 16,
+      "high_freq_energy_ratio": 0.3618,
+      "spectral_features_valid": true
+    }
+  }
+}

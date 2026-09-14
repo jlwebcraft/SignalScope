@@ -243,10 +243,9 @@ python scripts/verify_production_e2e.py
 
 ## 7. Production API Endpoints & Response Contract
 
-### Core Endpoints
 - `GET /health`: Basic service liveness health check (status, version).
 - `GET /ready`: Readiness probe distinguishing HTTP service availability from model checkpoint loading.
-- `GET /info`: Model architecture (`ConvNeXtTinyDetector`), model version identifier (`signalscope-baseline-v1`), checkpoint SHA-256 hash, calibration temperature ($T=0.9995$), and supported transformations.
+- `GET /info`: Model architecture (`ConvNeXtTinyDetector`), production model version (`signalscope-v2`), weights SHA-256 hash (`47f6b2a1...`), calibration temperature ($T=0.9986$), and rollback coordinates.
 - `POST /predict`: Production inference endpoint accepting multipart image upload (`image/jpeg`, `image/png`, `image/webp`, `image/bmp`, max 25MB).
 
 ### Response Schema Contract (`schema_version: "1.0"`)

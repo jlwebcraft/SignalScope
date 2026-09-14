@@ -1,0 +1,912 @@
+{
+  "candidate_comparisons": {
+    "baseline": {
+      "model_name": "baseline",
+      "old_validation": {
+        "roc_auc": 0.9992,
+        "macro_f1_050": 0.9908,
+        "accuracy_050": 0.9908,
+        "fpr_050": 0.0103,
+        "confusion_matrix_050": {
+          "tn": 7423,
+          "fp": 77,
+          "fn": 61,
+          "tp": 7439,
+          "matrix": [
+            [
+              7423,
+              77
+            ],
+            [
+              61,
+              7439
+            ]
+          ]
+        },
+        "optimal_threshold": {
+          "threshold": 0.4214,
+          "accuracy": 0.9909,
+          "macro_f1": 0.9909,
+          "fpr": 0.0105,
+          "confusion_matrix": {
+            "tn": 7421,
+            "fp": 79,
+            "fn": 57,
+            "tp": 7443,
+            "matrix": [
+              [
+                7421,
+                79
+              ],
+              [
+                57,
+                7443
+              ]
+            ]
+          }
+        },
+        "raw_ece": 0.0062,
+        "calibrated_ece": 0.0062,
+        "raw_brier": 0.0079,
+        "calibrated_brier": 0.0079
+      },
+      "new_validation": {
+        "roc_auc": 0.595,
+        "macro_f1_050": 0.4313,
+        "accuracy_050": 0.5322,
+        "fpr_050": 0.8891,
+        "confusion_matrix_050": {
+          "tn": 62,
+          "fp": 497,
+          "fn": 26,
+          "tp": 533,
+          "matrix": [
+            [
+              62,
+              497
+            ],
+            [
+              26,
+              533
+            ]
+          ]
+        },
+        "optimal_threshold": {
+          "threshold": 0.99,
+          "accuracy": 0.5778,
+          "macro_f1": 0.546,
+          "fpr": 0.6869,
+          "confusion_matrix": {
+            "tn": 175,
+            "fp": 384,
+            "fn": 88,
+            "tp": 471,
+            "matrix": [
+              [
+                175,
+                384
+              ],
+              [
+                88,
+                471
+              ]
+            ]
+          }
+        },
+        "raw_ece": 0.4462,
+        "calibrated_ece": 0.4462,
+        "raw_brier": 0.448,
+        "calibrated_brier": 0.448
+      },
+      "generator_stratified_evaluation": {
+        "num_generators": 19,
+        "macro_avg_auc": 0.5961,
+        "strongest_generator": {
+          "name": "fast-sdxl",
+          "auc": 0.7278
+        },
+        "weakest_generator": {
+          "name": "gemini-3-pro-image-preview",
+          "auc": 0.5159
+        },
+        "auc_spread": 0.2119,
+        "generators": {
+          "fast-sdxl": {
+            "samples": 31,
+            "roc_auc": 0.7278,
+            "recall_at_050": 1.0,
+            "mean_confidence": 0.9999
+          },
+          "firefly_image5": {
+            "samples": 17,
+            "roc_auc": 0.7089,
+            "recall_at_050": 1.0,
+            "mean_confidence": 0.9996
+          },
+          "flux-2": {
+            "samples": 31,
+            "roc_auc": 0.6302,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9648
+          },
+          "flux-2-max": {
+            "samples": 23,
+            "roc_auc": 0.538,
+            "recall_at_050": 1.0,
+            "mean_confidence": 0.9908
+          },
+          "flux-2-pro": {
+            "samples": 31,
+            "roc_auc": 0.5888,
+            "recall_at_050": 0.9355,
+            "mean_confidence": 0.9302
+          },
+          "flux-dev": {
+            "samples": 23,
+            "roc_auc": 0.5344,
+            "recall_at_050": 1.0,
+            "mean_confidence": 0.975
+          },
+          "flux-pro-v1.1": {
+            "samples": 31,
+            "roc_auc": 0.5325,
+            "recall_at_050": 0.871,
+            "mean_confidence": 0.8789
+          },
+          "gemini-25-flash-image": {
+            "samples": 31,
+            "roc_auc": 0.5598,
+            "recall_at_050": 0.9355,
+            "mean_confidence": 0.9368
+          },
+          "gemini-3-pro-image-preview": {
+            "samples": 31,
+            "roc_auc": 0.5159,
+            "recall_at_050": 0.9032,
+            "mean_confidence": 0.9108
+          },
+          "gpt-image-1": {
+            "samples": 31,
+            "roc_auc": 0.5351,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9466
+          },
+          "gpt-image-1.5": {
+            "samples": 31,
+            "roc_auc": 0.5598,
+            "recall_at_050": 0.9355,
+            "mean_confidence": 0.9323
+          },
+          "hidream-i1-dev": {
+            "samples": 31,
+            "roc_auc": 0.6633,
+            "recall_at_050": 1.0,
+            "mean_confidence": 0.9917
+          },
+          "ideogram-v3": {
+            "samples": 31,
+            "roc_auc": 0.5952,
+            "recall_at_050": 0.9355,
+            "mean_confidence": 0.9407
+          },
+          "imagen4": {
+            "samples": 31,
+            "roc_auc": 0.6614,
+            "recall_at_050": 1.0,
+            "mean_confidence": 0.9926
+          },
+          "midjourney_v7": {
+            "samples": 31,
+            "roc_auc": 0.5586,
+            "recall_at_050": 0.871,
+            "mean_confidence": 0.8516
+          },
+          "reve": {
+            "samples": 31,
+            "roc_auc": 0.6057,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9521
+          },
+          "seedreamv4.5": {
+            "samples": 31,
+            "roc_auc": 0.6326,
+            "recall_at_050": 1.0,
+            "mean_confidence": 0.9966
+          },
+          "stable-diffusion-v35-medium": {
+            "samples": 31,
+            "roc_auc": 0.5832,
+            "recall_at_050": 0.9032,
+            "mean_confidence": 0.9048
+          },
+          "z-image-turbo": {
+            "samples": 31,
+            "roc_auc": 0.5945,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9487
+          }
+        }
+      },
+      "calibration": {
+        "fitted_temperature": 0.9995
+      }
+    },
+    "exp2_5ep": {
+      "model_name": "exp2_5ep",
+      "old_validation": {
+        "roc_auc": 0.9988,
+        "macro_f1_050": 0.9877,
+        "accuracy_050": 0.9877,
+        "fpr_050": 0.01,
+        "confusion_matrix_050": {
+          "tn": 7425,
+          "fp": 75,
+          "fn": 110,
+          "tp": 7390,
+          "matrix": [
+            [
+              7425,
+              75
+            ],
+            [
+              110,
+              7390
+            ]
+          ]
+        },
+        "optimal_threshold": {
+          "threshold": 0.2573,
+          "accuracy": 0.9895,
+          "macro_f1": 0.9895,
+          "fpr": 0.0105,
+          "confusion_matrix": {
+            "tn": 7421,
+            "fp": 79,
+            "fn": 79,
+            "tp": 7421,
+            "matrix": [
+              [
+                7421,
+                79
+              ],
+              [
+                79,
+                7421
+              ]
+            ]
+          }
+        },
+        "raw_ece": 0.0092,
+        "calibrated_ece": 0.0092,
+        "raw_brier": 0.0101,
+        "calibrated_brier": 0.0101
+      },
+      "new_validation": {
+        "roc_auc": 0.9267,
+        "macro_f1_050": 0.8505,
+        "accuracy_050": 0.8506,
+        "fpr_050": 0.1753,
+        "confusion_matrix_050": {
+          "tn": 461,
+          "fp": 98,
+          "fn": 69,
+          "tp": 490,
+          "matrix": [
+            [
+              461,
+              98
+            ],
+            [
+              69,
+              490
+            ]
+          ]
+        },
+        "optimal_threshold": {
+          "threshold": 0.9751,
+          "accuracy": 0.8596,
+          "macro_f1": 0.8588,
+          "fpr": 0.0644,
+          "confusion_matrix": {
+            "tn": 523,
+            "fp": 36,
+            "fn": 121,
+            "tp": 438,
+            "matrix": [
+              [
+                523,
+                36
+              ],
+              [
+                121,
+                438
+              ]
+            ]
+          }
+        },
+        "raw_ece": 0.1095,
+        "calibrated_ece": 0.1095,
+        "raw_brier": 0.1265,
+        "calibrated_brier": 0.1265
+      },
+      "generator_stratified_evaluation": {
+        "num_generators": 19,
+        "macro_avg_auc": 0.9282,
+        "strongest_generator": {
+          "name": "ideogram-v3",
+          "auc": 0.9805
+        },
+        "weakest_generator": {
+          "name": "midjourney_v7",
+          "auc": 0.8106
+        },
+        "auc_spread": 0.1699,
+        "generators": {
+          "fast-sdxl": {
+            "samples": 31,
+            "roc_auc": 0.8734,
+            "recall_at_050": 0.7742,
+            "mean_confidence": 0.7769
+          },
+          "firefly_image5": {
+            "samples": 17,
+            "roc_auc": 0.9722,
+            "recall_at_050": 1.0,
+            "mean_confidence": 0.967
+          },
+          "flux-2": {
+            "samples": 31,
+            "roc_auc": 0.9538,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9513
+          },
+          "flux-2-max": {
+            "samples": 23,
+            "roc_auc": 0.9475,
+            "recall_at_050": 0.8696,
+            "mean_confidence": 0.8744
+          },
+          "flux-2-pro": {
+            "samples": 31,
+            "roc_auc": 0.949,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9384
+          },
+          "flux-dev": {
+            "samples": 23,
+            "roc_auc": 0.9347,
+            "recall_at_050": 0.913,
+            "mean_confidence": 0.901
+          },
+          "flux-pro-v1.1": {
+            "samples": 31,
+            "roc_auc": 0.8213,
+            "recall_at_050": 0.7419,
+            "mean_confidence": 0.7194
+          },
+          "gemini-25-flash-image": {
+            "samples": 31,
+            "roc_auc": 0.9748,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9681
+          },
+          "gemini-3-pro-image-preview": {
+            "samples": 31,
+            "roc_auc": 0.9181,
+            "recall_at_050": 0.8387,
+            "mean_confidence": 0.8445
+          },
+          "gpt-image-1": {
+            "samples": 31,
+            "roc_auc": 0.9671,
+            "recall_at_050": 0.9355,
+            "mean_confidence": 0.934
+          },
+          "gpt-image-1.5": {
+            "samples": 31,
+            "roc_auc": 0.962,
+            "recall_at_050": 0.9355,
+            "mean_confidence": 0.9422
+          },
+          "hidream-i1-dev": {
+            "samples": 31,
+            "roc_auc": 0.9719,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9614
+          },
+          "ideogram-v3": {
+            "samples": 31,
+            "roc_auc": 0.9805,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9667
+          },
+          "imagen4": {
+            "samples": 31,
+            "roc_auc": 0.953,
+            "recall_at_050": 0.9032,
+            "mean_confidence": 0.914
+          },
+          "midjourney_v7": {
+            "samples": 31,
+            "roc_auc": 0.8106,
+            "recall_at_050": 0.6452,
+            "mean_confidence": 0.6536
+          },
+          "reve": {
+            "samples": 31,
+            "roc_auc": 0.9382,
+            "recall_at_050": 0.8387,
+            "mean_confidence": 0.874
+          },
+          "seedreamv4.5": {
+            "samples": 31,
+            "roc_auc": 0.9598,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9584
+          },
+          "stable-diffusion-v35-medium": {
+            "samples": 31,
+            "roc_auc": 0.8395,
+            "recall_at_050": 0.7097,
+            "mean_confidence": 0.7013
+          },
+          "z-image-turbo": {
+            "samples": 31,
+            "roc_auc": 0.9088,
+            "recall_at_050": 0.8065,
+            "mean_confidence": 0.8163
+          }
+        }
+      },
+      "calibration": {
+        "fitted_temperature": 1.0
+      }
+    },
+    "exp3_5ep": {
+      "model_name": "exp3_5ep",
+      "old_validation": {
+        "roc_auc": 0.9991,
+        "macro_f1_050": 0.9851,
+        "accuracy_050": 0.9851,
+        "fpr_050": 0.0237,
+        "confusion_matrix_050": {
+          "tn": 7322,
+          "fp": 178,
+          "fn": 45,
+          "tp": 7455,
+          "matrix": [
+            [
+              7322,
+              178
+            ],
+            [
+              45,
+              7455
+            ]
+          ]
+        },
+        "optimal_threshold": {
+          "threshold": 0.9487,
+          "accuracy": 0.9873,
+          "macro_f1": 0.9873,
+          "fpr": 0.0096,
+          "confusion_matrix": {
+            "tn": 7428,
+            "fp": 72,
+            "fn": 118,
+            "tp": 7382,
+            "matrix": [
+              [
+                7428,
+                72
+              ],
+              [
+                118,
+                7382
+              ]
+            ]
+          }
+        },
+        "raw_ece": 0.0086,
+        "calibrated_ece": 0.0086,
+        "raw_brier": 0.0119,
+        "calibrated_brier": 0.0119
+      },
+      "new_validation": {
+        "roc_auc": 0.922,
+        "macro_f1_050": 0.8578,
+        "accuracy_050": 0.8578,
+        "fpr_050": 0.1395,
+        "confusion_matrix_050": {
+          "tn": 481,
+          "fp": 78,
+          "fn": 81,
+          "tp": 478,
+          "matrix": [
+            [
+              481,
+              78
+            ],
+            [
+              81,
+              478
+            ]
+          ]
+        },
+        "optimal_threshold": {
+          "threshold": 0.6338,
+          "accuracy": 0.864,
+          "macro_f1": 0.8639,
+          "fpr": 0.0984,
+          "confusion_matrix": {
+            "tn": 504,
+            "fp": 55,
+            "fn": 97,
+            "tp": 462,
+            "matrix": [
+              [
+                504,
+                55
+              ],
+              [
+                97,
+                462
+              ]
+            ]
+          }
+        },
+        "raw_ece": 0.0664,
+        "calibrated_ece": 0.0665,
+        "raw_brier": 0.1098,
+        "calibrated_brier": 0.1099
+      },
+      "generator_stratified_evaluation": {
+        "num_generators": 19,
+        "macro_avg_auc": 0.9237,
+        "strongest_generator": {
+          "name": "ideogram-v3",
+          "auc": 0.9809
+        },
+        "weakest_generator": {
+          "name": "midjourney_v7",
+          "auc": 0.7582
+        },
+        "auc_spread": 0.2227,
+        "generators": {
+          "fast-sdxl": {
+            "samples": 31,
+            "roc_auc": 0.8719,
+            "recall_at_050": 0.7419,
+            "mean_confidence": 0.7307
+          },
+          "firefly_image5": {
+            "samples": 17,
+            "roc_auc": 0.954,
+            "recall_at_050": 0.9412,
+            "mean_confidence": 0.8983
+          },
+          "flux-2": {
+            "samples": 31,
+            "roc_auc": 0.9438,
+            "recall_at_050": 0.9032,
+            "mean_confidence": 0.8753
+          },
+          "flux-2-max": {
+            "samples": 23,
+            "roc_auc": 0.9552,
+            "recall_at_050": 0.9565,
+            "mean_confidence": 0.9061
+          },
+          "flux-2-pro": {
+            "samples": 31,
+            "roc_auc": 0.9398,
+            "recall_at_050": 0.9032,
+            "mean_confidence": 0.8761
+          },
+          "flux-dev": {
+            "samples": 23,
+            "roc_auc": 0.958,
+            "recall_at_050": 0.913,
+            "mean_confidence": 0.8933
+          },
+          "flux-pro-v1.1": {
+            "samples": 31,
+            "roc_auc": 0.818,
+            "recall_at_050": 0.6129,
+            "mean_confidence": 0.6507
+          },
+          "gemini-25-flash-image": {
+            "samples": 31,
+            "roc_auc": 0.9746,
+            "recall_at_050": 1.0,
+            "mean_confidence": 0.9379
+          },
+          "gemini-3-pro-image-preview": {
+            "samples": 31,
+            "roc_auc": 0.9209,
+            "recall_at_050": 0.8387,
+            "mean_confidence": 0.8282
+          },
+          "gpt-image-1": {
+            "samples": 31,
+            "roc_auc": 0.9576,
+            "recall_at_050": 0.9032,
+            "mean_confidence": 0.9039
+          },
+          "gpt-image-1.5": {
+            "samples": 31,
+            "roc_auc": 0.9649,
+            "recall_at_050": 0.9355,
+            "mean_confidence": 0.9064
+          },
+          "hidream-i1-dev": {
+            "samples": 31,
+            "roc_auc": 0.9709,
+            "recall_at_050": 0.9355,
+            "mean_confidence": 0.9184
+          },
+          "ideogram-v3": {
+            "samples": 31,
+            "roc_auc": 0.9809,
+            "recall_at_050": 0.9355,
+            "mean_confidence": 0.9476
+          },
+          "imagen4": {
+            "samples": 31,
+            "roc_auc": 0.961,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9178
+          },
+          "midjourney_v7": {
+            "samples": 31,
+            "roc_auc": 0.7582,
+            "recall_at_050": 0.5806,
+            "mean_confidence": 0.5604
+          },
+          "reve": {
+            "samples": 31,
+            "roc_auc": 0.9379,
+            "recall_at_050": 0.8065,
+            "mean_confidence": 0.7988
+          },
+          "seedreamv4.5": {
+            "samples": 31,
+            "roc_auc": 0.9572,
+            "recall_at_050": 0.9677,
+            "mean_confidence": 0.9062
+          },
+          "stable-diffusion-v35-medium": {
+            "samples": 31,
+            "roc_auc": 0.8241,
+            "recall_at_050": 0.7097,
+            "mean_confidence": 0.6546
+          },
+          "z-image-turbo": {
+            "samples": 31,
+            "roc_auc": 0.9007,
+            "recall_at_050": 0.7742,
+            "mean_confidence": 0.7803
+          }
+        }
+      },
+      "calibration": {
+        "fitted_temperature": 0.9986
+      }
+    }
+  },
+  "robustness_benchmark": {
+    "baseline": {
+      "transformations": {
+        "original": {
+          "description": "Pristine native 32x32",
+          "roc_auc": 0.9994,
+          "accuracy": 0.99,
+          "macro_f1": 0.99,
+          "fpr": 0.01,
+          "flip_rate": 0.0,
+          "probability_drift": 0.0
+        },
+        "jpeg_95": {
+          "description": "High-quality JPEG (Q=95)",
+          "roc_auc": 0.9993,
+          "accuracy": 0.99,
+          "macro_f1": 0.99,
+          "fpr": 0.01,
+          "flip_rate": 0.0,
+          "probability_drift": 0.0011
+        },
+        "jpeg_85": {
+          "description": "Standard web JPEG (Q=85)",
+          "roc_auc": 0.9994,
+          "accuracy": 0.986,
+          "macro_f1": 0.986,
+          "fpr": 0.016,
+          "flip_rate": 0.004,
+          "probability_drift": 0.0036
+        },
+        "jpeg_70": {
+          "description": "Aggressive social compression (Q=70)",
+          "roc_auc": 0.9995,
+          "accuracy": 0.986,
+          "macro_f1": 0.986,
+          "fpr": 0.02,
+          "flip_rate": 0.006,
+          "probability_drift": 0.0046
+        },
+        "resize": {
+          "description": "Bilinear downsample (0.7x) + Bicubic restore",
+          "roc_auc": 0.9473,
+          "accuracy": 0.657,
+          "macro_f1": 0.6119,
+          "fpr": 0.002,
+          "flip_rate": 0.341,
+          "probability_drift": 0.3395
+        },
+        "screenshot": {
+          "description": "Subpixel box blur (r=0.5) + JPEG Q=80",
+          "roc_auc": 0.9186,
+          "accuracy": 0.593,
+          "macro_f1": 0.5131,
+          "fpr": 0.002,
+          "flip_rate": 0.405,
+          "probability_drift": 0.4019
+        },
+        "light_edit": {
+          "description": "90% center crop + Bilinear restore",
+          "roc_auc": 0.9914,
+          "accuracy": 0.852,
+          "macro_f1": 0.8488,
+          "fpr": 0.002,
+          "flip_rate": 0.146,
+          "probability_drift": 0.1455
+        }
+      },
+      "mean_degraded_auc": 0.9759,
+      "mean_degraded_accuracy": 0.844,
+      "mean_flip_rate": 0.1503,
+      "mean_probability_drift": 0.1494
+    },
+    "exp2_5ep": {
+      "transformations": {
+        "original": {
+          "description": "Pristine native 32x32",
+          "roc_auc": 0.9995,
+          "accuracy": 0.989,
+          "macro_f1": 0.989,
+          "fpr": 0.008,
+          "flip_rate": 0.0,
+          "probability_drift": 0.0
+        },
+        "jpeg_95": {
+          "description": "High-quality JPEG (Q=95)",
+          "roc_auc": 0.9994,
+          "accuracy": 0.988,
+          "macro_f1": 0.988,
+          "fpr": 0.008,
+          "flip_rate": 0.001,
+          "probability_drift": 0.0022
+        },
+        "jpeg_85": {
+          "description": "Standard web JPEG (Q=85)",
+          "roc_auc": 0.9994,
+          "accuracy": 0.989,
+          "macro_f1": 0.989,
+          "fpr": 0.01,
+          "flip_rate": 0.004,
+          "probability_drift": 0.0039
+        },
+        "jpeg_70": {
+          "description": "Aggressive social compression (Q=70)",
+          "roc_auc": 0.9994,
+          "accuracy": 0.986,
+          "macro_f1": 0.986,
+          "fpr": 0.016,
+          "flip_rate": 0.009,
+          "probability_drift": 0.0061
+        },
+        "resize": {
+          "description": "Bilinear downsample (0.7x) + Bicubic restore",
+          "roc_auc": 0.9521,
+          "accuracy": 0.622,
+          "macro_f1": 0.559,
+          "fpr": 0.0,
+          "flip_rate": 0.377,
+          "probability_drift": 0.3743
+        },
+        "screenshot": {
+          "description": "Subpixel box blur (r=0.5) + JPEG Q=80",
+          "roc_auc": 0.9199,
+          "accuracy": 0.568,
+          "macro_f1": 0.4689,
+          "fpr": 0.0,
+          "flip_rate": 0.429,
+          "probability_drift": 0.4287
+        },
+        "light_edit": {
+          "description": "90% center crop + Bilinear restore",
+          "roc_auc": 0.9921,
+          "accuracy": 0.841,
+          "macro_f1": 0.8369,
+          "fpr": 0.0,
+          "flip_rate": 0.156,
+          "probability_drift": 0.1567
+        }
+      },
+      "mean_degraded_auc": 0.977,
+      "mean_degraded_accuracy": 0.8323,
+      "mean_flip_rate": 0.1627,
+      "mean_probability_drift": 0.162
+    },
+    "exp3_5ep": {
+      "transformations": {
+        "original": {
+          "description": "Pristine native 32x32",
+          "roc_auc": 0.9992,
+          "accuracy": 0.985,
+          "macro_f1": 0.985,
+          "fpr": 0.022,
+          "flip_rate": 0.0,
+          "probability_drift": 0.0
+        },
+        "jpeg_95": {
+          "description": "High-quality JPEG (Q=95)",
+          "roc_auc": 0.9983,
+          "accuracy": 0.986,
+          "macro_f1": 0.986,
+          "fpr": 0.02,
+          "flip_rate": 0.003,
+          "probability_drift": 0.0022
+        },
+        "jpeg_85": {
+          "description": "Standard web JPEG (Q=85)",
+          "roc_auc": 0.9972,
+          "accuracy": 0.984,
+          "macro_f1": 0.984,
+          "fpr": 0.026,
+          "flip_rate": 0.005,
+          "probability_drift": 0.0039
+        },
+        "jpeg_70": {
+          "description": "Aggressive social compression (Q=70)",
+          "roc_auc": 0.999,
+          "accuracy": 0.982,
+          "macro_f1": 0.982,
+          "fpr": 0.03,
+          "flip_rate": 0.007,
+          "probability_drift": 0.0064
+        },
+        "resize": {
+          "description": "Bilinear downsample (0.7x) + Bicubic restore",
+          "roc_auc": 0.9755,
+          "accuracy": 0.711,
+          "macro_f1": 0.6847,
+          "fpr": 0.0,
+          "flip_rate": 0.296,
+          "probability_drift": 0.2953
+        },
+        "screenshot": {
+          "description": "Subpixel box blur (r=0.5) + JPEG Q=80",
+          "roc_auc": 0.956,
+          "accuracy": 0.629,
+          "macro_f1": 0.5698,
+          "fpr": 0.0,
+          "flip_rate": 0.378,
+          "probability_drift": 0.3697
+        },
+        "light_edit": {
+          "description": "90% center crop + Bilinear restore",
+          "roc_auc": 0.9974,
+          "accuracy": 0.919,
+          "macro_f1": 0.9185,
+          "fpr": 0.0,
+          "flip_rate": 0.088,
+          "probability_drift": 0.091
+        }
+      },
+      "mean_degraded_auc": 0.9872,
+      "mean_degraded_accuracy": 0.8685,
+      "mean_flip_rate": 0.1295,
+      "mean_probability_drift": 0.1281
+    }
+  }
+}
