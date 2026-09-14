@@ -90,8 +90,23 @@ class ModelArtifactManager:
     ) -> None:
         self.model_version = model_version or os.environ.get("MODEL_VERSION", DEFAULT_MODEL_VERSION)
         if self.model_version not in MODEL_REGISTRY:
-            logger.warning(f"Unknown model_version '{self.model_version}', defaulting to '{DEFAULT_MODEL_VERSION}'")
-            self.model_version = DEFAULT_MODEL_VERSION
+            logger.error(
+                f"Unknown or invalid model_version '{self.model_version}'. "
+                f"Valid registered versions: {list(MODEL_REGISTRY.keys())}. "
+                "Failing safely without loading unverified weights."
+            )
+            self.spec = None
+            self.expected_checkpoint_sha256 = None
+            self.expected_scaler_sha256 = None
+            self.default_checkpoint = None
+            self.default_scaler = None
+            self.checkpoint_path = Path("invalid_checkpoint_path")
+            self.model_url = None
+            self.scaler_path = Path("invalid_scaler_path")
+            self.scaler_url = None
+            self.cache_dir = Path(cache_dir or os.environ.get("MODEL_CACHE_DIR", "cache/models"))
+            self.is_custom_local_path = False
+            return
 
         self.spec = MODEL_REGISTRY[self.model_version]
         self.expected_checkpoint_sha256 = self.spec["weights_sha256"]
@@ -126,6 +141,10 @@ class ModelArtifactManager:
         Returns:
             Resolved Path to checkpoint, or None if unavailable/corrupted.
         """
+        if self.spec is None:
+            logger.error(f"Cannot resolve checkpoint: invalid model_version '{self.model_version}'")
+            return None
+
         # 1. Local path
         if self.checkpoint_path.exists() and self.checkpoint_path.is_file():
             if not self.is_custom_local_path:
@@ -197,6 +216,9 @@ class ModelArtifactManager:
 
     def resolve_scaler(self) -> Optional[Path]:
         """Resolves the temperature scaler JSON file."""
+        if self.spec is None:
+            return None
+
         if self.scaler_path.exists() and self.scaler_path.is_file():
             return self.scaler_path
 
@@ -225,7 +247,9 @@ class ModelArtifactManager:
     def get_version_info(cls, version: Optional[str] = None) -> Dict[str, Any]:
         """Returns structured metadata about the production model."""
         ver = version or os.environ.get("MODEL_VERSION", DEFAULT_MODEL_VERSION)
-        spec = MODEL_REGISTRY.get(ver, MODEL_REGISTRY[DEFAULT_MODEL_VERSION])
+        if ver not in MODEL_REGISTRY:
+            raise ValueError(f"Unknown or invalid model_version '{ver}'. Valid registered versions: {list(MODEL_REGISTRY.keys())}")
+        spec = MODEL_REGISTRY[ver]
         return {
             "model_version": spec["model_version"],
             "architecture": spec["architecture"],

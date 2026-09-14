@@ -105,7 +105,7 @@ async def ready():
         )
     return {
         "status": "ready",
-        "model_version": ModelArtifactManager.get_version_info()["model_version"],
+        "model_version": inference_engine.model_version,
         "device": inference_engine.device,
     }
 
