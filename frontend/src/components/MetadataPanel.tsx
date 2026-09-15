@@ -15,13 +15,13 @@ export const MetadataPanel: React.FC<MetadataPanelProps> = ({ metadata }) => {
       : "Not Recorded (EXIF Stripped)";
 
   return (
-    <section className="bg-white border border-slate-200 rounded overflow-hidden shadow-xs">
+    <section className="bg-white border border-slate-200 rounded p-5 shadow-xs space-y-4">
       {/* Section Sub-Header */}
-      <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-2 h-2 rounded-[1px] bg-slate-700" />
+      <div className="flex flex-wrap items-baseline justify-between border-b border-slate-100 pb-3 gap-2">
+        <div className="flex items-center space-x-2">
+          <span className="w-2 h-2 rounded-[1px] bg-slate-800" aria-hidden="true" />
           <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900">
-            Provenance & Metadata Inspection
+            Provenance & Metadata Property Sheet
           </h3>
         </div>
 
@@ -36,76 +36,72 @@ export const MetadataPanel: React.FC<MetadataPanelProps> = ({ metadata }) => {
         </span>
       </div>
 
-      <div className="p-5 space-y-4">
-        {/* Technical Property Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded space-y-1">
-            <span className="text-[10px] text-slate-400 uppercase font-semibold block">EXIF Structure</span>
-            <div className="font-semibold text-slate-900">
-              {metadata.has_exif ? "Structure Present" : "Not Present / Stripped"}
-            </div>
-            <p className="text-[11px] text-slate-500 font-sans">
-              {metadata.has_exif
-                ? "Physical exposure, lens focal length, or timestamp tags recorded."
-                : "Standard for social messaging apps, web re-uploads, and generative outputs."}
-            </p>
+      {/* Property Sheet Key-Value Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded space-y-1">
+          <span className="text-[10px] text-slate-400 uppercase font-semibold block">EXIF Structure</span>
+          <div className="font-semibold text-slate-900">
+            {metadata.has_exif ? "Structure Present" : "Not Present / Stripped"}
           </div>
-
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded space-y-1">
-            <span className="text-[10px] text-slate-400 uppercase font-semibold block">C2PA Content Credentials</span>
-            <div className="font-semibold text-slate-900">
-              {metadata.c2pa_present ? "Cryptographic Manifest Detected" : "No Cryptographic Signature"}
-            </div>
-            <p className="text-[11px] text-slate-500 font-sans">
-              {metadata.c2pa_present
-                ? "Cryptographic chain of custody manifest attached."
-                : "No C2PA / CAI digital signature block detected in file headers."}
-            </p>
-          </div>
-
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded space-y-1">
-            <span className="text-[10px] text-slate-400 uppercase font-semibold block">Hardware Identifier</span>
-            <div className="font-semibold text-slate-900 truncate">
-              {cameraDisplay}
-            </div>
-            <p className="text-[11px] text-slate-500 font-sans">
-              Optical sensor capture equipment manufacturer and model string.
-            </p>
-          </div>
-
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded space-y-1">
-            <span className="text-[10px] text-slate-400 uppercase font-semibold block">Software / Processing Tag</span>
-            <div className="font-semibold text-slate-900 truncate">
-              {metadata.software || "Not Recorded"}
-            </div>
-            <p className="text-[11px] text-slate-500 font-sans">
-              Editing software or generator pipeline signature recorded in headers.
-            </p>
-          </div>
+          <p className="text-[11px] text-slate-500 font-sans">
+            {metadata.has_exif
+              ? "Physical exposure and camera hardware tags recorded."
+              : "Standard for web re-uploads, social platforms, and synthetic outputs."}
+          </p>
         </div>
 
-        {/* Identified Anomalies */}
-        {metadata.anomalies && metadata.anomalies.length > 0 && (
-          <div className="p-3 border border-amber-200 bg-amber-50 rounded text-amber-900 text-xs space-y-1">
-            <div className="font-mono text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <ShieldAlert className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-              <span>Header Structural Anomalies</span>
-            </div>
-            <ul className="list-disc list-inside space-y-0.5 font-mono text-[11px] text-amber-950/90 pl-5">
-              {metadata.anomalies.map((anom, idx) => (
-                <li key={idx}>{anom}</li>
-              ))}
-            </ul>
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded space-y-1">
+          <span className="text-[10px] text-slate-400 uppercase font-semibold block">C2PA Credentials</span>
+          <div className="font-semibold text-slate-900">
+            {metadata.c2pa_present ? "Cryptographic Manifest Detected" : "No Cryptographic Signature"}
           </div>
-        )}
+          <p className="text-[11px] text-slate-500 font-sans">
+            {metadata.c2pa_present
+              ? "Cryptographic chain of custody manifest verified."
+              : "No C2PA / Content Authenticity Initiative signature block attached."}
+          </p>
+        </div>
 
-        {/* Methodological Guidance */}
-        <div className="p-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-600 leading-relaxed font-sans">
-          <strong className="font-mono text-[10px] text-slate-900 uppercase font-semibold">Provenance Scope: </strong>
-          Metadata omission is ubiquitous across the modern internet due to platform re-encoding (e.g. WhatsApp, X, Instagram) and
-          does not prove synthetic origin. Provenance serves solely as corroborating contextual data.
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded space-y-1">
+          <span className="text-[10px] text-slate-400 uppercase font-semibold block">Hardware Sensor Model</span>
+          <div className="font-semibold text-slate-900 truncate">
+            {cameraDisplay}
+          </div>
+          <p className="text-[11px] text-slate-500 font-sans">
+            Optical capture equipment string.
+          </p>
+        </div>
+
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded space-y-1">
+          <span className="text-[10px] text-slate-400 uppercase font-semibold block">Software / Generator Tag</span>
+          <div className="font-semibold text-slate-900 truncate">
+            {metadata.software || "Not Recorded"}
+          </div>
+          <p className="text-[11px] text-slate-500 font-sans">
+            Processing tool or generative synthesis pipeline signature.
+          </p>
         </div>
       </div>
+
+      {/* Identified Anomalies */}
+      {metadata.anomalies && metadata.anomalies.length > 0 && (
+        <div className="p-3 border border-amber-200 bg-amber-50 rounded text-amber-900 text-xs space-y-1">
+          <div className="font-mono text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <ShieldAlert className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+            <span>Header Structural Anomalies</span>
+          </div>
+          <ul className="list-disc list-inside space-y-0.5 font-mono text-[11px] text-amber-950/90 pl-5">
+            {metadata.anomalies.map((anom, idx) => (
+              <li key={idx}>{anom}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Inline caption note */}
+      <p className="text-[11px] font-mono text-slate-500 pt-1">
+        Metadata omission is standard across web messaging platforms and social networks and does not prove synthetic origin.
+      </p>
     </section>
   );
 };
