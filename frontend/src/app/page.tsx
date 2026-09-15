@@ -11,13 +11,14 @@ import { RobustnessPanel } from "@/components/RobustnessPanel";
 import { MetadataPanel } from "@/components/MetadataPanel";
 import { ExplanationCard } from "@/components/ExplanationCard";
 import { PredictionResponse } from "@/types/prediction";
-import { AlertCircle, ArrowRight, RotateCcw, Cpu, Activity, ShieldCheck, FileSearch } from "lucide-react";
+import { AlertCircle, ArrowRight, RotateCcw, Printer } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function HomePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [dimensions, setDimensions] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -28,6 +29,13 @@ export default function HomePage() {
     setPrediction(null);
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
+
+    // Extract natural dimensions
+    const img = new Image();
+    img.onload = () => {
+      setDimensions(`${img.naturalWidth} × ${img.naturalHeight} px`);
+    };
+    img.src = url;
   };
 
   const handleClear = () => {
@@ -36,6 +44,7 @@ export default function HomePage() {
     }
     setSelectedFile(null);
     setPreviewUrl(null);
+    setDimensions(null);
     setPrediction(null);
     setErrorMsg(null);
   };
@@ -84,28 +93,34 @@ export default function HomePage() {
     }
   };
 
+  const handlePrint = () => {
+    if (typeof window !== "undefined") {
+      window.print();
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fa] text-[#334155]">
       <Header apiBaseUrl={API_BASE_URL} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* State A: Initial Ingestion & Examination Workspace */}
+        {/* State A: Initial Ingestion & Workstation Workspace */}
         {!prediction && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column (7 cols): Ingestion Console */}
             <div className="lg:col-span-7 space-y-6">
               <div className="space-y-1 border-b border-slate-200 pb-4">
                 <div className="flex items-center space-x-2">
-                  <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-500">
-                    Forensic Intake Console
+                  <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-sky-800">
+                    Forensic Ingestion Console
                   </span>
                 </div>
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                  Image Authenticity Examination
+                  Digital Media Authenticity Verification
                 </h1>
                 <p className="text-xs text-slate-600 leading-relaxed pt-1">
-                  Upload an image to execute multimodal forensic verification across spatial ConvNeXt feature attribution,
-                  2D Fourier spectral harmonics, perturbation stability stress-testing, and C2PA provenance.
+                  Upload a digital still image to execute multimodal forensic verification across spatial ConvNeXt feature attribution,
+                  2D Fourier spectral residuals, perturbation stability stress-testing, and C2PA provenance.
                 </p>
               </div>
 
@@ -139,70 +154,77 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Right Column (5 cols): Workstation Capabilities Brief */}
+            {/* Right Column (5 cols): Engine Specification & Diagnostic Telemetry */}
             <div className="lg:col-span-5 space-y-4">
               <div className="bg-white border border-slate-200 rounded p-5 space-y-4 shadow-xs">
-                <div className="border-b border-slate-100 pb-3">
-                  <span className="text-[10px] font-mono uppercase font-semibold text-slate-400 block">
-                    Verification Pipeline
+                <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase font-semibold text-slate-400 block">
+                      Workstation Instrumentation
+                    </span>
+                    <h2 className="text-sm font-bold text-slate-900 mt-0.5">
+                      Engine Specification & Architecture
+                    </h2>
+                  </div>
+                  <span className="text-[10px] font-mono bg-sky-50 text-sky-800 border border-sky-200 px-2 py-0.5 rounded font-semibold uppercase">
+                    v2.0 Release
                   </span>
-                  <h2 className="text-sm font-bold text-slate-900 mt-0.5">
-                    Multimodal Forensic Architecture
-                  </h2>
                 </div>
 
-                <div className="space-y-3.5 text-xs">
-                  <div className="flex items-start space-x-3">
-                    <Cpu className="w-4 h-4 text-sky-700 mt-0.5 shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900">Spatial ConvNeXt Attribution</h3>
-                      <p className="text-[11px] text-slate-500 leading-relaxed">
-                        Evaluates patch-level anomalies, synthetic texture blending, and unnatural edge gradients via Grad-CAM receptive field heatmaps.
-                      </p>
-                    </div>
+                {/* Technical Parameter Readout Sheet */}
+                <div className="space-y-3 font-mono text-xs divide-y divide-slate-100">
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-slate-500">Detector Backbone</span>
+                    <span className="font-semibold text-slate-900 text-right">ConvNeXt-Tiny (12k ft 1k)</span>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <Activity className="w-4 h-4 text-emerald-700 mt-0.5 shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900">2D Fourier Spectral Harmonics</h3>
-                      <p className="text-[11px] text-slate-500 leading-relaxed">
-                        Centered 2D FFT inspects radial energy decay. Generative upsamplers introduce high-frequency periodic grid lattice residuals.
-                      </p>
-                    </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-slate-500">Registered Artifact</span>
+                    <span className="font-semibold text-sky-800 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">
+                      signalscope-v2
+                    </span>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <ShieldCheck className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900">Perturbation Invariance & Uncertainty</h3>
-                      <p className="text-[11px] text-slate-500 leading-relaxed">
-                        Exhibits undergo stress tests across compression, blur, and scaling. Fragile logits or decision corridor scores trigger explicit Human Review.
-                      </p>
-                    </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-slate-500">Calibration Math</span>
+                    <span className="text-slate-800">Platt Scaling (T = 0.9986)</span>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <FileSearch className="w-4 h-4 text-purple-700 mt-0.5 shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-slate-900">Provenance & C2PA Credentials</h3>
-                      <p className="text-[11px] text-slate-500 leading-relaxed">
-                        Inspects camera hardware exposure tags and verifies cryptographic C2PA Content Credentials manifests.
-                      </p>
-                    </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-slate-500">Patch Dimension</span>
+                    <span className="text-slate-800">3 × 32 × 32 px (Input: 224×224)</span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-slate-500">Decision Policy</span>
+                    <span className="text-slate-800">0.50 Threshold / 0.40–0.60 Corridor</span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-slate-500">Perturbation Suite</span>
+                    <span className="text-slate-800">JPEG Q=95/85/70, Downscale, Crop</span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-slate-500">Inspection Layers</span>
+                    <span className="text-slate-800">Spatial, Fourier, Stress, C2PA</span>
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-600 font-mono">
-                  <span className="text-slate-400 block uppercase text-[10px]">Calibration Protocol</span>
-                  Temperature Scaling T = 0.9986 applied post-hoc to prevent uncalibrated overconfidence.
+                {/* Verification Integrity Notice */}
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-600 font-sans leading-relaxed">
+                  <strong className="font-mono text-[10px] text-slate-900 uppercase font-semibold block">
+                    Holdout Integrity Guarantee:
+                  </strong>
+                  SignalScope v2 is verified across cross-generator datasets and independent photographic holdouts.
+                  The official SIH held-out test partition remains strictly untouched.
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Loading State: Pipeline Activity Readout */}
+        {/* Loading State: Real-Time Pipeline Activity Readout */}
         {isLoading && (
           <div className="py-12">
             <AnalysisProgress />
@@ -225,60 +247,88 @@ export default function HomePage() {
         {/* State B: Analyzed Forensic Examination Dossier */}
         {prediction && (
           <div className="space-y-6">
-            {/* Dossier Control Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-3">
-              <div className="flex items-center space-x-2 text-xs font-mono text-slate-500">
-                <span className="font-bold uppercase tracking-wider text-slate-900 text-[11px]">
-                  Examination Dossier
-                </span>
-                <span className="text-slate-300">/</span>
-                <span className="text-slate-700 truncate max-w-xs">
-                  {selectedFile?.name || "Uploaded Exhibit"}
-                </span>
-                <span className="text-slate-300 hidden md:inline">/</span>
-                <span className="text-slate-500 hidden md:inline">
-                  Schema v{prediction.schema_version}
-                </span>
+            {/* Forensic Docket Header */}
+            <div className="bg-white border border-slate-200 rounded p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-[1px] bg-slate-900" />
+                  <span className="font-mono font-bold text-xs uppercase tracking-wider text-slate-900">
+                    Forensic Examination Docket
+                  </span>
+                  <span className="text-slate-300">/</span>
+                  <span className="font-mono text-xs text-sky-800 font-medium">
+                    Schema v{prediction.schema_version}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-mono text-slate-600 pt-0.5">
+                  <div>
+                    <span className="text-slate-400">Exhibit: </span>
+                    <span className="font-semibold text-slate-800">{selectedFile?.name || "Uploaded Exhibit"}</span>
+                  </div>
+                  {dimensions && (
+                    <div>
+                      <span className="text-slate-400">Resolution: </span>
+                      <span className="text-slate-800">{dimensions}</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-slate-400">Engine: </span>
+                    <span className="text-slate-800">signalscope-v2</span>
+                  </div>
+                </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleClear}
-                className="flex items-center space-x-1.5 text-xs font-mono font-medium text-slate-700 hover:text-slate-900 bg-white border border-slate-300 hover:bg-slate-50 px-3 py-1.5 rounded transition-colors focus-forensic shadow-xs"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                <span>Examine Another Image</span>
-              </button>
+              <div className="flex items-center space-x-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="flex items-center space-x-1.5 text-xs font-mono font-medium text-slate-700 hover:text-slate-900 bg-slate-50 border border-slate-300 hover:bg-slate-100 px-3 py-1.5 rounded transition-colors focus-forensic"
+                  title="Print or export examination report"
+                >
+                  <Printer className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Print Report</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="flex items-center space-x-1.5 text-xs font-mono font-semibold text-white bg-slate-900 hover:bg-slate-800 px-3.5 py-1.5 rounded transition-colors focus-forensic shadow-xs"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Examine New Exhibit</span>
+                </button>
+              </div>
             </div>
 
-            {/* 1. Primary Verdict Banner */}
+            {/* 1. Primary Verdict & Calibrated Adjudication Banner */}
             <VerdictCard prediction={prediction} />
 
-            {/* 2. Spatial Feature Attribution Studio */}
+            {/* 2. Optical Receptive Field Comparator (Dark Canvas) */}
             <SpatialHeatmapViewer
               spatial={prediction.evidence.spatial}
               originalPreview={previewUrl}
             />
 
-            {/* 3. 2D Fourier Spectral Residuals */}
+            {/* 3. 2D Fourier Spectrogram & High-Frequency Residuals Deck */}
             <SpectralViewer spectral={prediction.evidence.spectral} />
 
-            {/* 4. Perturbation Stability Matrix */}
+            {/* 4. Perturbation Stability Stress-Testing Matrix */}
             <RobustnessPanel
               robustness={prediction.evidence.robustness}
               operatingThreshold={0.50}
             />
 
-            {/* 5. Metadata & Provenance Inspection */}
+            {/* 5. Provenance & Metadata Property Sheet */}
             <MetadataPanel metadata={prediction.evidence.metadata} />
 
-            {/* 6. Synthesized Forensic Finding & Methodology Limitations */}
+            {/* 6. Synthesized Forensic Findings & Adjudication Report */}
             <ExplanationCard prediction={prediction} />
           </div>
         )}
       </main>
 
-      {/* Forensic Workstation Colophon & Disclaimer Footer */}
+      {/* Forensic Workstation Colophon Footer */}
       <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 space-y-1">
           <div className="flex items-center justify-center space-x-2 text-slate-700 font-medium">
