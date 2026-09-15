@@ -50,6 +50,74 @@
 
 ---
 
+## Try the Live Demo
+
+**Live application:** https://sih.deskcraft.online
+
+No local installation is required to try the deployed system.
+
+### Basic workflow
+
+1. Open **https://sih.deskcraft.online**
+2. Upload a JPEG, PNG, WEBP, or BMP image using drag-and-drop or the file picker.
+3. Wait for SignalScope to complete the analysis.
+4. Read the primary assessment:
+   - **Likely Real (Authentic)**
+   - **Likely AI-Generated**
+   - **Uncertain / Indeterminate**
+5. Review the calibrated likelihood and confidence.
+6. Check the **Authenticity Stability** result.
+7. Open the forensic evidence:
+   - Grad-CAM spatial attribution
+   - 2D Fourier / FFT spectral evidence
+   - degradation / perturbation matrix
+   - EXIF / C2PA provenance information
+8. Read the grounded explanation and human-review guidance.
+9. Use **Examine New Exhibit** to analyze another image.
+10. Use **Print Report** when a printable analysis record is needed.
+
+> [!NOTE]
+> **Probabilistic Notice**: SignalScope provides a probabilistic authenticity assessment based on statistical signal and spectral features, not definitive or legal proof.
+
+---
+
+## Judge Quick Demo
+
+For the fastest demonstration, use the built-in deterministic benchmark samples already available in the interface.
+
+| Sample | Purpose | Expected result |
+|---|---|---|
+| `#0955` | Authentic real image | `Likely Real` |
+| `#3244` | Synthetic AI image | `Likely AI-Generated` |
+| `#5457` | Stability/uncertainty case | `Uncertain / Indeterminate` |
+
+### #0955 — authentic example
+Demonstrates:
+- image ingestion
+- real-image assessment
+- high stability
+- Grad-CAM
+- spectral evidence
+- provenance inspection
+
+### #3244 — synthetic example
+Demonstrates:
+- synthetic-image assessment
+- calibrated likelihood
+- confidence
+- spatial attribution
+- spectral evidence
+- robustness results
+
+### #5457 — uncertainty example
+Demonstrates SignalScope's most important trust feature:
+- strong baseline classifier signal
+- low perturbation stability
+- automatic uncertainty/adjudication override
+- human forensic review recommendation
+
+---
+
 ## 1. Problem Framing & Challenge Context
 
 With the rapid proliferation of modern generative imaging models—such as Latent Diffusion Models (Stable Diffusion, SDXL, FLUX), Generative Adversarial Networks (GANs), and Flow Matching architectures—visual media can be synthesized with exceptional perceptual fidelity. This creates acute societal challenges including visual disinformation, synthetic evidence injection, and automated media manipulation.
@@ -436,63 +504,91 @@ The FastAPI backend exposes versioned, standards-compliant endpoints (`schema_ve
 
 ---
 
-## 15. Reproducibility & Local Setup (10-Minute Guide)
+## 15. Local Run & Reproducibility (10-Minute Guide)
 
 In compliance with the SIH submission contract, evaluators can reproduce predictions and run verification tests locally in under 10 minutes.
 
-### 1. Clone & Environment Setup
+### 1. Clone
+
 ```bash
-# Clone repository
 git clone https://github.com/jlwebcraft/SignalScope.git
 cd SignalScope
+```
 
-# Create and activate virtual environment (Python 3.11 - 3.13)
+### 2. Python Environment
+
+Create and activate an isolated Python environment (Python 3.11 – 3.13):
+
+**Option A: Virtual Environment (venv)**
+```bash
 python -m venv .venv
-# Windows:
+# On Windows:
 .venv\Scripts\activate
-# Linux/macOS:
+# On Linux/macOS:
 source .venv/bin/activate
+```
 
-# Install dependencies
+**Option B: Conda Environment**
+```bash
+conda env create -f environment.yml
+conda activate signalscope
+```
+
+### 3. Install Dependencies
+
+```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-*(Alternatively, use Conda: `conda env create -f environment.yml && conda activate signalscope`)*
+### 4. Download Production Model Checkpoint (`signalscope-v2`)
 
-### 2. Download Production Model Artifact
-The production model artifact is hosted on GitHub Releases v2.0.0:
-```bash
-# Windows PowerShell:
+The production model artifact (`best_model.pt`, SHA-256: `47f6b2a19d61...`) is hosted on GitHub Releases v2.0.0:
+
+**On Windows (PowerShell):**
+```powershell
+New-Item -ItemType Directory -Force -Path checkpoints/additional_training/exp3_5ep
 Invoke-WebRequest -Uri "https://github.com/jlwebcraft/SignalScope/releases/download/v2.0.0/best_model.pt" -OutFile "checkpoints/additional_training/exp3_5ep/best_model.pt"
+```
 
-# Linux / macOS (curl):
+**On Linux / macOS (curl):**
+```bash
 mkdir -p checkpoints/additional_training/exp3_5ep
 curl -L -o checkpoints/additional_training/exp3_5ep/best_model.pt "https://github.com/jlwebcraft/SignalScope/releases/download/v2.0.0/best_model.pt"
 ```
 
-### 3. Run Backend Verification Suite (78 Tests)
-```bash
-python -m pytest tests/ -q
-# Expected: 78 passed in ~85s
-```
+### 5. Start Backend API
 
-### 4. Run Standalone CLI Prediction
 ```bash
-python model/predict.py --image frontend/public/samples/authentic_real.jpg --checkpoint checkpoints/additional_training/exp3_5ep/best_model.pt --json
-```
-
-### 5. Launch Local Full-Stack Workstation
-```bash
-# Terminal 1: Launch FastAPI Backend (Port 8000)
 uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+- API interactive docs: `http://localhost:8000/docs`
+- Health probe: `http://localhost:8000/health`
+- Readiness probe: `http://localhost:8000/ready`
 
-# Terminal 2: Launch Next.js Frontend (Port 3000)
+### 6. Start Frontend Web Application
+
+Open a second terminal:
+```bash
 cd frontend
 npm install
 npm run dev
 ```
-Open `http://localhost:3000` to inspect the live forensic workstation.
+Open `http://localhost:3000` to interact with the forensic analysis workstation.
+
+### 7. Run Standalone CLI Prediction
+
+Run prediction directly from the command line without launching the web server:
+```bash
+python model/predict.py --image frontend/public/samples/authentic_real.jpg --checkpoint checkpoints/additional_training/exp3_5ep/best_model.pt --json
+```
+
+### 8. Run Full Verification Test Suite (78 Tests)
+
+```bash
+python -m pytest tests/ -q
+# Expected: 78 passed in ~85s
+```
 
 ---
 
