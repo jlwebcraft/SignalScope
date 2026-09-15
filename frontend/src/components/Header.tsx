@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
 import { SystemHealth } from "@/types/prediction";
+import { MethodologyModal } from "@/components/MethodologyModal";
+import { Shield, ExternalLink } from "lucide-react";
 
 interface HeaderProps {
   apiBaseUrl: string;
@@ -10,125 +11,127 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ apiBaseUrl }) => {
   const [health, setHealth] = useState<SystemHealth | null>(null);
-  const [showEthicalModal, setShowEthicalModal] = useState(false);
+  const [modelVersion, setModelVersion] = useState<string>("signalscope-v2");
+  const [showMethodology, setShowMethodology] = useState(false);
 
   useEffect(() => {
-    const fetchHealth = async () => {
+    let isMounted = true;
+    const fetchTelemetry = async () => {
       try {
-        const res = await fetch(`${apiBaseUrl}/api/v1/health`);
-        if (res.ok) {
-          const data = await res.json();
-          setHealth(data);
+        const [healthRes, readyRes] = await Promise.allSettled([
+          fetch(`${apiBaseUrl}/api/v1/health`),
+          fetch(`${apiBaseUrl}/ready`),
+        ]);
+
+        if (!isMounted) return;
+
+        if (healthRes.status === "fulfilled" && healthRes.value.ok) {
+          const healthData = await healthRes.value.json();
+          setHealth(healthData);
         } else {
           setHealth(null);
         }
+
+        if (readyRes.status === "fulfilled" && readyRes.value.ok) {
+          const readyData = await readyRes.value.json();
+          if (readyData.model_version) {
+            setModelVersion(readyData.model_version);
+          }
+        }
       } catch {
-        setHealth(null);
+        if (isMounted) setHealth(null);
       }
     };
-    fetchHealth();
-    const interval = setInterval(fetchHealth, 15000);
-    return () => clearInterval(interval);
+
+    fetchTelemetry();
+    const interval = setInterval(fetchTelemetry, 20000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [apiBaseUrl]);
 
   return (
     <>
-      <header className="border-b border-[#e5e2d9] bg-[#fbfbf9] sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          {/* Masthead Identity */}
-          <div className="flex items-center">
-            <span className="font-semibold text-xs tracking-[0.2em] text-[#121316] uppercase">
-              SignalScope
-            </span>
-            <span className="text-xs text-[#606570] font-editorial italic ml-3 pl-3 border-l border-[#e5e2d9]">
-              Image Forensics
+      <header className="border-b border-slate-200 bg-white sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-13 flex items-center justify-between">
+          {/* Workstation Identity */}
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-2.5 h-2.5 bg-slate-900 rounded-[1px]" />
+              <span className="font-bold text-sm tracking-tight text-slate-900">
+                SignalScope
+              </span>
+            </div>
+            <span className="text-slate-300">/</span>
+            <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+              Image Forensics Workstation
             </span>
           </div>
 
-          {/* Minimal Text Telemetry & Utilities */}
-          <div className="flex items-center space-x-3 text-xs text-[#606570]">
-            {/* API Status */}
-            <div className="flex items-center space-x-1.5">
+          {/* Precision Telemetry & Navigation */}
+          <div className="flex items-center space-x-4 text-xs">
+            {/* API Status Indicator */}
+            <div className="flex items-center space-x-1.5 font-mono text-[11px] text-slate-600">
               <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  health ? "bg-[#166534]" : "bg-[#991b1b]"
+                className={`w-2 h-2 rounded-full ${
+                  health ? "bg-emerald-600" : "bg-rose-600"
                 }`}
+                aria-hidden="true"
               />
-              <span className="font-medium text-[#2a2d34]">
-                {health ? "API Online" : "API Offline"}
+              <span className="hidden md:inline">
+                {health ? "Backend Live" : "Offline"}
               </span>
             </div>
 
-            <span className="text-[#dcd9ce]">/</span>
+            <span className="text-slate-200" aria-hidden="true">|</span>
 
-            {/* Compute Indicator */}
-            <span className="font-mono text-[11px] text-[#606570]">
-              {health?.device ? health.device.toUpperCase() : "CPU"}
+            {/* Model Version Tag */}
+            <div className="flex items-center space-x-1 font-mono text-[11px] text-slate-600">
+              <span className="text-slate-400 hidden lg:inline">Engine:</span>
+              <span className="bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-slate-800 font-semibold">
+                {modelVersion}
+              </span>
+            </div>
+
+            {/* Device Compute Tag */}
+            <span className="font-mono text-[11px] text-slate-500 hidden sm:inline">
+              [{health?.device ? health.device.toUpperCase() : "CPU"}]
             </span>
 
-            <span className="text-[#dcd9ce]">/</span>
+            <span className="text-slate-200" aria-hidden="true">|</span>
 
-            {/* Ethical Guardrails Button */}
+            {/* Methodology & Guardrails Modal Trigger */}
             <button
               type="button"
-              onClick={() => setShowEthicalModal(true)}
-              className="text-xs uppercase tracking-wider text-[#606570] hover:text-[#121316] underline underline-offset-4 decoration-[#dcd9ce] hover:decoration-[#121316] transition-colors"
+              onClick={() => setShowMethodology(true)}
+              className="flex items-center space-x-1 text-slate-600 hover:text-slate-900 font-medium hover:bg-slate-100 px-2 py-1 rounded transition-colors focus-forensic"
             >
-              Guardrails
+              <Shield className="w-3.5 h-3.5 text-slate-500" />
+              <span>Guardrails</span>
             </button>
+
+            {/* Code Repository Link */}
+            <a
+              href="https://github.com/jlwebcraft/SignalScope"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center space-x-1 text-slate-500 hover:text-slate-900 p-1 rounded transition-colors focus-forensic"
+              title="GitHub Repository"
+            >
+              <span className="sr-only">GitHub Repository</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
           </div>
         </div>
       </header>
 
-      {/* Ethical Guardrails Modal */}
-      {showEthicalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#121316]/50 backdrop-blur-[2px] animate-fadeIn">
-          <div className="max-w-lg w-full bg-[#fbfbf9] border border-[#e5e2d9] p-6 shadow-2xl relative text-[#2a2d34]">
-            <button
-              type="button"
-              onClick={() => setShowEthicalModal(false)}
-              className="absolute top-4 right-4 text-[#606570] hover:text-[#121316] p-1 transition-colors"
-              aria-label="Close modal"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="mb-4">
-              <span className="text-[10px] font-mono tracking-widest text-[#9a3412] uppercase font-semibold">
-                Ethical Standard · SIH 2026
-              </span>
-              <h3 className="text-xl font-editorial font-semibold text-[#121316] mt-0.5">
-                Responsible Forensic Principles
-              </h3>
-            </div>
-
-            <div className="space-y-3 text-xs leading-relaxed text-[#2a2d34] border-t border-[#e5e2d9] pt-4">
-              <p>
-                <strong className="text-[#121316]">01. Probabilistic Assessment:</strong> Evaluations represent statistical likelihoods derived from trained ConvNeXt feature activations, 2D Fourier spectra, and controlled perturbation tests. They do not constitute causal or legal proof.
-              </p>
-              <p>
-                <strong className="text-[#121316]">02. No Biometric Identification:</strong> SignalScope analyzes image structure, frequency residuals, and compression artifacts. It does not perform facial recognition, biometric profiling, or human identification.
-              </p>
-              <p>
-                <strong className="text-[#121316]">03. Responsible Uncertainty:</strong> Predictions in the boundary corridor (0.40–0.60 calibrated likelihood) or displaying volatility under recompression/rescaling trigger an explicit <span className="font-semibold text-[#92400e]">Uncertain</span> classification recommending human verification.
-              </p>
-              <p>
-                <strong className="text-[#121316]">04. Supporting Context:</strong> Spatial heatmaps and frequency profiles illustrate features that guided classifier decisions; they do not represent universal physical signatures.
-              </p>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-[#e5e2d9] flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowEthicalModal(false)}
-                className="px-4 py-1.5 text-xs font-medium uppercase tracking-wider bg-[#121316] hover:bg-[#2a2d34] text-[#fbfbf9] transition-colors"
-              >
-                Acknowledge
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <MethodologyModal
+        isOpen={showMethodology}
+        onClose={() => setShowMethodology(false)}
+        modelVersion={modelVersion}
+        device={health?.device ? health.device.toUpperCase() : "CPU"}
+      />
     </>
   );
 };
