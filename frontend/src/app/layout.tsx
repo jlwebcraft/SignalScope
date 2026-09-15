@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SignalScope — Image Forensics & Authenticity Verification",
+  title: "SignalScope — Image Authenticity & Forensics Workstation",
   description:
-    "Independent media forensic verification using spatial feature attribution, 2D Fourier spectral harmonics, and perturbation stability.",
+    "Specialist image authenticity examination workstation utilizing spatial ConvNeXt feature attribution, 2D Fourier spectral residuals, perturbation stability stress-testing, and C2PA/EXIF provenance.",
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-[#fbfbf9] text-[#2a2d34] min-h-screen antialiased selection:bg-[#9a3412]/15 selection:text-[#121316]">
+      <body className="bg-[#f8f9fa] text-[#334155] min-h-screen antialiased selection:bg-[#0f172a] selection:text-[#ffffff]">
         {children}
       </body>
     </html>
