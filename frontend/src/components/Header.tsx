@@ -56,21 +56,21 @@ export const Header: React.FC<HeaderProps> = ({ apiBaseUrl }) => {
       <header className="border-b border-slate-200 bg-white sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-13 flex items-center justify-between">
           {/* Workstation Identity */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2.5 sm:space-x-3">
             <div className="flex items-center space-x-2">
               <div className="w-2.5 h-2.5 bg-slate-900 rounded-[1px]" />
               <span className="font-bold text-sm tracking-tight text-slate-900">
                 SignalScope
               </span>
             </div>
-            <span className="text-slate-300">/</span>
+            <span className="text-slate-300 hidden sm:inline">/</span>
             <span className="text-xs text-slate-500 font-medium hidden sm:inline">
               Image Forensics Workstation
             </span>
           </div>
 
           {/* Precision Telemetry & Navigation */}
-          <div className="flex items-center space-x-4 text-xs">
+          <div className="flex items-center space-x-2.5 sm:space-x-4 text-xs">
             {/* API Status Indicator */}
             <div className="flex items-center space-x-1.5 font-mono text-[11px] text-slate-600">
               <span
@@ -79,23 +79,23 @@ export const Header: React.FC<HeaderProps> = ({ apiBaseUrl }) => {
                 }`}
                 aria-hidden="true"
               />
-              <span className="hidden md:inline">
-                {health ? "Backend Live" : "Offline"}
+              <span className="font-medium text-slate-700">
+                {health ? "Live" : "Offline"}
               </span>
             </div>
 
-            <span className="text-slate-200" aria-hidden="true">|</span>
+            <span className="text-slate-200 hidden xs:inline" aria-hidden="true">|</span>
 
             {/* Model Version Tag */}
-            <div className="flex items-center space-x-1 font-mono text-[11px] text-slate-600">
-              <span className="text-slate-400 hidden lg:inline">Engine:</span>
+            <div className="hidden md:flex items-center space-x-1 font-mono text-[11px] text-slate-600">
+              <span className="text-slate-400">Engine:</span>
               <span className="bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-slate-800 font-semibold">
                 {modelVersion}
               </span>
             </div>
 
             {/* Device Compute Tag */}
-            <span className="font-mono text-[11px] text-slate-500 hidden sm:inline">
+            <span className="font-mono text-[11px] text-slate-500 hidden lg:inline">
               [{health?.device ? health.device.toUpperCase() : "CPU"}]
             </span>
 
@@ -105,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({ apiBaseUrl }) => {
             <button
               type="button"
               onClick={() => setShowMethodology(true)}
-              className="flex items-center space-x-1 text-slate-600 hover:text-slate-900 font-medium hover:bg-slate-100 px-2 py-1 rounded transition-colors focus-forensic"
+              className="flex items-center space-x-1 text-slate-700 hover:text-slate-900 font-medium hover:bg-slate-100 px-2 py-1 rounded transition-colors focus-forensic"
             >
               <Shield className="w-3.5 h-3.5 text-slate-500" />
               <span>Guardrails</span>
