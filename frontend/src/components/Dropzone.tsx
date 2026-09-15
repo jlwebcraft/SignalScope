@@ -1,13 +1,20 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { AlertCircle } from "lucide-react";
+import { UploadCloud, AlertCircle } from "lucide-react";
 
 interface DropzoneProps {
   onFileSelected: (file: File) => void;
   isLoading: boolean;
   selectedPreview: string | null;
   onClear: () => void;
+}
+
+interface FileMetadata {
+  name: string;
+  sizeFormatted: string;
+  type: string;
+  dimensions?: string;
 }
 
 export const Dropzone: React.FC<DropzoneProps> = ({
@@ -18,19 +25,51 @@ export const Dropzone: React.FC<DropzoneProps> = ({
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [fileMeta, setFileMeta] = useState<FileMetadata | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
 
   const validateAndSelect = (file: File) => {
     setErrorMsg(null);
     const validTypes = ["image/jpeg", "image/png", "image/webp", "image/bmp"];
-    if (!validTypes.includes(file.type.toLowerCase())) {
+    const fileType = file.type.toLowerCase();
+
+    if (!validTypes.includes(fileType)) {
       setErrorMsg(`Unsupported file format (${file.type || "unknown"}). Allowed: JPEG, PNG, WEBP, BMP.`);
       return;
     }
     if (file.size > 25 * 1024 * 1024) {
-      setErrorMsg("File size exceeds 25 MB limit.");
+      setErrorMsg("File size exceeds the 25 MB ingestion limit.");
       return;
     }
+
+    // Extract natural dimensions
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      setFileMeta({
+        name: file.name,
+        sizeFormatted: formatFileSize(file.size),
+        type: file.type || "image/jpeg",
+        dimensions: `${img.naturalWidth} × ${img.naturalHeight} px`,
+      });
+      URL.revokeObjectURL(objectUrl);
+    };
+    img.onerror = () => {
+      setFileMeta({
+        name: file.name,
+        sizeFormatted: formatFileSize(file.size),
+        type: file.type || "image/jpeg",
+      });
+      URL.revokeObjectURL(objectUrl);
+    };
+    img.src = objectUrl;
+
     onFileSelected(file);
   };
 
@@ -42,22 +81,28 @@ export const Dropzone: React.FC<DropzoneProps> = ({
     }
   };
 
+  const handleClear = () => {
+    setFileMeta(null);
+    setErrorMsg(null);
+    onClear();
+  };
+
   const loadSample = async (samplePath: string, sampleName: string) => {
     setErrorMsg(null);
     try {
       const res = await fetch(samplePath);
-      if (!res.ok) throw new Error("Could not load sample file.");
+      if (!res.ok) throw new Error("Could not load benchmark sample file.");
       const blob = await res.blob();
       const file = new File([blob], sampleName, { type: "image/jpeg" });
-      onFileSelected(file);
+      validateAndSelect(file);
     } catch {
-      setErrorMsg("Unable to load sample image. Please upload a local file.");
+      setErrorMsg("Unable to load benchmark sample image. Please upload a local image file.");
     }
   };
 
   return (
-    <div className="w-full space-y-6">
-      {/* Intake Drop Zone */}
+    <div className="w-full space-y-4">
+      {/* Precision Forensic Ingestion Area */}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -66,12 +111,12 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDrop}
         onClick={() => !selectedPreview && !isLoading && fileInputRef.current?.click()}
-        className={`transition-colors duration-150 p-8 flex flex-col items-center justify-center cursor-pointer border ${
+        className={`relative border rounded transition-colors duration-150 p-6 flex flex-col items-center justify-center ${
           isDragOver
-            ? "border-[#121316] bg-[#f3f1ea]"
+            ? "border-sky-600 bg-sky-50/40"
             : selectedPreview
-            ? "border-[#e5e2d9] bg-[#ffffff] cursor-default"
-            : "border-dashed border-[#dcd9ce] hover:border-[#121316] bg-[#ffffff]"
+            ? "border-slate-300 bg-white"
+            : "border-slate-300 bg-white hover:border-slate-400 hover:bg-slate-50/50 cursor-pointer"
         }`}
       >
         <input
@@ -87,111 +132,178 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         />
 
         {selectedPreview ? (
-          <div className="flex flex-col items-center space-y-4 w-full">
-            <div className="relative group max-w-sm w-full h-64 bg-[#fbfbf9] border border-[#e5e2d9] flex items-center justify-center overflow-hidden p-2">
+          <div className="flex flex-col md:flex-row items-center gap-6 w-full">
+            {/* Image Preview Box */}
+            <div className="relative shrink-0 w-48 h-48 bg-slate-100 border border-slate-200 rounded p-1 flex items-center justify-center overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selectedPreview}
-                alt="Selected evidence image"
+                alt="Staged forensic exhibit"
                 className="w-full h-full object-contain pixelated"
               />
-              <div className="absolute inset-0 bg-[#121316]/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            </div>
+
+            {/* Exhibit Metadata Readout */}
+            <div className="flex-1 w-full space-y-3">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                  <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-700">
+                    Exhibit Staged for Ingestion
+                  </span>
+                </div>
+                <h3 className="text-sm font-semibold text-slate-900 truncate max-w-md">
+                  {fileMeta?.name || "Uploaded Image"}
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-xs text-slate-600 bg-slate-50 p-3 rounded border border-slate-200">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase block">Size</span>
+                  <span className="font-medium text-slate-800">{fileMeta?.sizeFormatted || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase block">Format</span>
+                  <span className="font-medium text-slate-800 uppercase">
+                    {fileMeta?.type.replace("image/", "") || "JPEG"}
+                  </span>
+                </div>
+                <div className="col-span-2 sm:col-span-1">
+                  <span className="text-[10px] text-slate-400 uppercase block">Resolution</span>
+                  <span className="font-medium text-slate-800">{fileMeta?.dimensions || "Calculating..."}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 pt-1">
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onClear();
+                    fileInputRef.current?.click();
                   }}
                   disabled={isLoading}
-                  className="px-3 py-1.5 text-xs font-mono tracking-wider uppercase bg-[#fbfbf9] text-[#121316] hover:bg-[#ffffff] transition-colors"
+                  className="text-xs font-medium text-slate-700 hover:text-slate-900 underline underline-offset-4 focus-forensic"
                 >
-                  Replace image
+                  Change file
+                </button>
+                <span className="text-slate-300">|</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClear();
+                  }}
+                  disabled={isLoading}
+                  className="text-xs font-medium text-rose-700 hover:text-rose-900 focus-forensic"
+                >
+                  Remove
                 </button>
               </div>
             </div>
-            <div className="text-center">
-              <span className="text-xs font-mono uppercase tracking-wider text-[#606570]">
-                Exhibit Staged for Ingestion
-              </span>
-            </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center text-center space-y-2 py-3">
-            <p className="text-sm font-medium tracking-tight text-[#121316]">
-              DROP IMAGE HERE <span className="text-[#606570] font-normal">or</span> <span className="underline underline-offset-4 decoration-[#8c8a82]">browse files</span>
-            </p>
-            <p className="text-xs font-mono text-[#8c8a82]">
-              JPEG · PNG · WEBP · BMP · Maximum 25 MB
-            </p>
+          <div className="flex flex-col items-center text-center space-y-3 py-6">
+            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 border border-slate-200">
+              <UploadCloud className="w-5 h-5 text-slate-700" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-slate-900">
+                Drag and drop image here, or <span className="text-sky-700 underline underline-offset-4">browse files</span>
+              </p>
+              <p className="text-xs text-slate-500">
+                JPEG, PNG, WebP, BMP · Maximum file size 25 MB
+              </p>
+            </div>
           </div>
         )}
       </div>
 
       {errorMsg && (
-        <div className="p-3 border border-[#fecaca] bg-[#fef2f2] text-[#991b1b] text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div className="p-3 border border-rose-200 bg-rose-50 text-rose-800 text-xs rounded flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
           <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* Representative Test Cases (Editorial List) */}
+      {/* Benchmark Reference Cases (Curated Partitions) */}
       {!selectedPreview && !isLoading && (
-        <div className="space-y-2 pt-2">
-          <div className="flex items-baseline justify-between border-b border-[#e5e2d9] pb-1.5">
-            <span className="text-[10px] font-mono tracking-[0.2em] text-[#606570] uppercase font-semibold">
-              Representative Case Archive
+        <div className="border border-slate-200 rounded bg-white overflow-hidden">
+          <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-700">
+              Standard Benchmark Partitions
             </span>
-            <span className="text-[10px] font-mono text-[#8c8a82]">
-              Standard Test Partitions
+            <span className="text-[11px] font-mono text-slate-500">
+              1-Click Reference Cases
             </span>
           </div>
 
-          <div className="divide-y divide-[#eeece5]">
+          <div className="divide-y divide-slate-100 text-xs">
             <button
               type="button"
               onClick={() => loadSample("/samples/authentic_real.jpg", "sample_real_0955.jpg")}
-              className="w-full py-2.5 px-2 text-left hover:bg-[#f3f1ea] transition-colors flex items-center justify-between group"
+              className="w-full px-4 py-2.5 text-left hover:bg-slate-50 flex items-center justify-between group transition-colors focus-forensic"
             >
-              <div className="flex items-baseline space-x-3">
-                <span className="text-[11px] font-mono text-[#9a3412]">01</span>
-                <span className="text-xs font-medium text-[#121316] group-hover:underline">
-                  Authentic photographic capture
+              <div className="flex items-center space-x-3">
+                <span className="w-5 font-mono text-[11px] text-slate-400 font-semibold group-hover:text-slate-900">
+                  01
                 </span>
+                <div>
+                  <span className="font-semibold text-slate-900 block group-hover:text-sky-800">
+                    Authentic Photographic Capture
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    Physical optical lens sensor capture with smooth continuous power-law spectral decay
+                  </span>
+                </div>
               </div>
-              <span className="text-[11px] font-mono text-[#8c8a82]">
-                Local Val #0955
+              <span className="font-mono text-[11px] text-emerald-800 font-medium bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded shrink-0">
+                Case #0955
               </span>
             </button>
 
             <button
               type="button"
               onClick={() => loadSample("/samples/synthetic_ai.jpg", "sample_ai_3244.jpg")}
-              className="w-full py-2.5 px-2 text-left hover:bg-[#f3f1ea] transition-colors flex items-center justify-between group"
+              className="w-full px-4 py-2.5 text-left hover:bg-slate-50 flex items-center justify-between group transition-colors focus-forensic"
             >
-              <div className="flex items-baseline space-x-3">
-                <span className="text-[11px] font-mono text-[#9a3412]">02</span>
-                <span className="text-xs font-medium text-[#121316] group-hover:underline">
-                  Synthetic generative model output
+              <div className="flex items-center space-x-3">
+                <span className="w-5 font-mono text-[11px] text-slate-400 font-semibold group-hover:text-slate-900">
+                  02
                 </span>
+                <div>
+                  <span className="font-semibold text-slate-900 block group-hover:text-sky-800">
+                    Synthetic Generative Model Output
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    Deep generative architecture with periodic high-frequency Fourier grid artifacts
+                  </span>
+                </div>
               </div>
-              <span className="text-[11px] font-mono text-[#8c8a82]">
-                Local Val #3244
+              <span className="font-mono text-[11px] text-rose-800 font-medium bg-rose-50 border border-rose-200 px-2 py-0.5 rounded shrink-0">
+                Case #3244
               </span>
             </button>
 
             <button
               type="button"
               onClick={() => loadSample("/samples/borderline_uncertain.jpg", "sample_uncertain_5457.jpg")}
-              className="w-full py-2.5 px-2 text-left hover:bg-[#f3f1ea] transition-colors flex items-center justify-between group"
+              className="w-full px-4 py-2.5 text-left hover:bg-slate-50 flex items-center justify-between group transition-colors focus-forensic"
             >
-              <div className="flex items-baseline space-x-3">
-                <span className="text-[11px] font-mono text-[#9a3412]">03</span>
-                <span className="text-xs font-medium text-[#121316] group-hover:underline">
-                  Perturbation volatile / uncertain case
+              <div className="flex items-center space-x-3">
+                <span className="w-5 font-mono text-[11px] text-slate-400 font-semibold group-hover:text-slate-900">
+                  03
                 </span>
+                <div>
+                  <span className="font-semibold text-slate-900 block group-hover:text-sky-800">
+                    Perturbation Volatile / Boundary Candidate
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    Strong model logit that experiences categorical decision flips under JPEG perturbation
+                  </span>
+                </div>
               </div>
-              <span className="text-[11px] font-mono text-[#8c8a82]">
-                Volatile #5457
+              <span className="font-mono text-[11px] text-amber-800 font-medium bg-amber-50 border border-amber-200 px-2 py-0.5 rounded shrink-0">
+                Case #5457
               </span>
             </button>
           </div>

@@ -1,75 +1,48 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Loader2 } from "lucide-react";
 
-interface Step {
-  id: string;
-  label: string;
-}
-
-const STEPS: Step[] = [
-  { id: "validate", label: "Validating input image dimensions & integrity" },
-  { id: "spatial", label: "Extracting ConvNeXt-Tiny spatial representations" },
-  { id: "calib", label: "Applying Temperature Scaling calibration (T=0.9995)" },
-  { id: "spectral", label: "Computing 2D Fourier log-magnitude spectrum" },
-  { id: "gradcam", label: "Generating Grad-CAM spatial activation map" },
-  { id: "robustness", label: "Evaluating stability across 4 perturbation probes" },
-];
-
 export const AnalysisProgress: React.FC = () => {
-  const [activeStep, setActiveStep] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveStep((prev) => (prev < STEPS.length - 1 ? prev + 1 : prev));
-    }, 450);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
-    <div className="bg-[#ffffff] border border-[#e5e2d9] p-6 max-w-md mx-auto space-y-4 shadow-sm animate-fadeIn">
-      <div className="flex items-center space-x-2.5 border-b border-[#e5e2d9] pb-3">
-        <Loader2 className="w-4 h-4 text-[#9a3412] animate-spin" />
+    <div className="bg-white border border-slate-300 rounded p-6 max-w-lg mx-auto space-y-4 shadow-sm">
+      <div className="flex items-center space-x-3 border-b border-slate-200 pb-3">
+        <Loader2 className="w-5 h-5 text-slate-800 animate-spin shrink-0" />
         <div>
-          <h4 className="text-xs font-mono font-bold text-[#121316] uppercase tracking-wider">
+          <h4 className="text-xs font-mono font-bold text-slate-900 uppercase tracking-wider">
             Executing Forensic Pipeline
           </h4>
-          <p className="text-[11px] font-mono text-[#8c8a82]">
-            Spatial, spectral, and perturbation evaluations
+          <p className="text-[11px] font-mono text-slate-500">
+            Evaluating spatial, spectral, perturbation, and provenance layers
           </p>
         </div>
       </div>
 
-      <div className="space-y-2 font-mono text-xs">
-        {STEPS.map((step, idx) => {
-          const isDone = idx < activeStep;
-          const isCurrent = idx === activeStep;
+      <div className="space-y-2 text-xs font-mono">
+        <div className="flex items-center justify-between text-slate-700 py-1 border-b border-slate-100">
+          <span className="text-slate-500">01. Spatial Analysis</span>
+          <span className="text-slate-900 font-medium">ConvNeXt-Tiny Feature Attribution & Grad-CAM</span>
+        </div>
+        <div className="flex items-center justify-between text-slate-700 py-1 border-b border-slate-100">
+          <span className="text-slate-500">02. Frequency Domain</span>
+          <span className="text-slate-900 font-medium">2D Centered Fast Fourier Transform</span>
+        </div>
+        <div className="flex items-center justify-between text-slate-700 py-1 border-b border-slate-100">
+          <span className="text-slate-500">03. Invariance Stress</span>
+          <span className="text-slate-900 font-medium">4× Perturbation Robustness Probes</span>
+        </div>
+        <div className="flex items-center justify-between text-slate-700 py-1 border-b border-slate-100">
+          <span className="text-slate-500">04. Calibration</span>
+          <span className="text-slate-900 font-medium">Temperature Scaling (T = 0.9986)</span>
+        </div>
+        <div className="flex items-center justify-between text-slate-700 py-1">
+          <span className="text-slate-500">05. Provenance</span>
+          <span className="text-slate-900 font-medium">EXIF & C2PA Content Credentials</span>
+        </div>
+      </div>
 
-          return (
-            <div
-              key={step.id}
-              className={`flex items-center space-x-3 transition-colors duration-150 ${
-                isDone
-                  ? "text-[#606570]"
-                  : isCurrent
-                  ? "text-[#121316] font-semibold"
-                  : "text-[#8c8a82]/60"
-              }`}
-            >
-              <div className="w-5 text-[11px] font-mono shrink-0">
-                {isDone ? (
-                  <span className="text-[#166534] font-bold">0{idx + 1}✓</span>
-                ) : isCurrent ? (
-                  <span className="text-[#9a3412] font-bold">0{idx + 1}►</span>
-                ) : (
-                  <span className="text-[#8c8a82]/60">0{idx + 1}</span>
-                )}
-              </div>
-              <span className="text-xs truncate">{step.label}</span>
-            </div>
-          );
-        })}
+      <div className="pt-2 text-[11px] text-slate-500 font-sans leading-relaxed border-t border-slate-100">
+        Evaluation is executed locally or via containerized inference on Google Cloud Run. Large images are processed at native resolution.
       </div>
     </div>
   );
